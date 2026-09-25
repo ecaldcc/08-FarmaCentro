@@ -28,14 +28,8 @@ try {
   console.error(await diagnoseConnectionFailure(uri));
   process.exit(1);
 }
-try {
-  await assertReplicaSet();
-} catch (error) {
-  console.error((error as Error).message);
-  await mongoose.disconnect();
-  process.exit(1);
-}
-
+// Collections, indexes and the genesis record do not need transactions: they are created even on
+// a standalone server, so the database structure exists before the replica set is enabled.
 const dbName = mongoose.connection.db?.databaseName ?? 'farmacentro';
 await ensureSchema();
 console.log(`Base "${dbName}": colecciones e índices listos.`);
@@ -47,6 +41,15 @@ if ((await AuditLog.estimatedDocumentCount()) === 0) {
     details: { note: 'Inicio de la cadena de la bitácora' },
   });
   console.log('Registro génesis de la bitácora creado (seq 0).');
+}
+
+// The API and the demo data use transactions (sales, voids, adjustments): they need a replica set.
+try {
+  await assertReplicaSet();
+} catch (error) {
+  console.error((error as Error).message);
+  await mongoose.disconnect();
+  process.exit(seedIfEmpty ? 1 : 0);
 }
 
 if (seedIfEmpty && process.env.NODE_ENV !== 'production' && (await User.estimatedDocumentCount()) === 0) {

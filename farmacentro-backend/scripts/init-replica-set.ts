@@ -7,7 +7,7 @@
  */
 import mongoose from 'mongoose';
 
-const HOST = process.env.MONGO_LOCAL_HOST ?? '127.0.0.1:27017';
+const HOST = process.env.MONGO_LOCAL_HOST ?? 'localhost:27017';
 
 await mongoose.connect(`mongodb://${HOST}/admin`, { directConnection: true, serverSelectionTimeoutMS: 5000 });
 const admin = mongoose.connection.db!.admin();
@@ -35,6 +35,6 @@ if (hello.setName) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
   console.log('Replica set "rs0" iniciado. Usa en .env:');
-  console.log(`  MONGODB_URI=mongodb://${HOST}/farmacentro?replicaSet=rs0`);
+  console.log(`  MONGODB_URI=mongodb://${HOST}/farmacentro`);
 }
 await mongoose.disconnect();

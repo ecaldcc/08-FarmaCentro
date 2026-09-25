@@ -39,11 +39,13 @@ FarmaCentro usa **transacciones** para ventas, anulaciones y ajustes (CLAUDE.md,
    npm run init-replica-set
    ```
 
-Tus otras bases de datos locales siguen funcionando igual. La cadena de conexión queda así (ya configurada en `.env`):
+Tus otras bases de datos locales siguen funcionando igual y MongoDB Compass se sigue conectando con `mongodb://localhost:27017/`. La cadena de conexión del backend (ya configurada en `.env`) es la misma de Compass con el nombre de la base:
 
 ```text
-MONGODB_URI=mongodb://127.0.0.1:27017/farmacentro?replicaSet=rs0
+MONGODB_URI=mongodb://localhost:27017/farmacentro
 ```
+
+La base `farmacentro` (colecciones, índices y registro génesis de la bitácora) se puede crear antes de activar el replica set con `npm run setup-db`; los datos de prueba y la API sí lo necesitan.
 
 Si el replica set no está activo, `npm run dev` se detiene y muestra estos mismos pasos.
 
