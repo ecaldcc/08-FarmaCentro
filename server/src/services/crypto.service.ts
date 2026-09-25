@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEq
 import type { Types } from 'mongoose';
 import { env } from '../config/env.js';
 import type { EncryptedValue } from '../models/encryptedField.js';
+import { toBuffer } from '../utils/binary.js';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_BYTES = 12;
@@ -43,10 +44,10 @@ export function decryptField(
   if (!key) {
     throw new Error(`Data encryption key version ${value.v} is not available`);
   }
-  const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(value.iv), { authTagLength: TAG_BYTES });
+  const decipher = createDecipheriv(ALGORITHM, key, toBuffer(value.iv), { authTagLength: TAG_BYTES });
   decipher.setAAD(aad(collection, id, field));
-  decipher.setAuthTag(Buffer.from(value.tag));
-  return Buffer.concat([decipher.update(Buffer.from(value.ct)), decipher.final()]).toString('utf8');
+  decipher.setAuthTag(toBuffer(value.tag));
+  return Buffer.concat([decipher.update(toBuffer(value.ct)), decipher.final()]).toString('utf8');
 }
 
 export function encryptJson(collection: string, id: Types.ObjectId | string, field: string, value: unknown): EncryptedValue {
