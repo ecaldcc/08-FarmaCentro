@@ -243,6 +243,7 @@ export async function dispensePrescription(
       customerId: p.customerId ? String(p.customerId) : undefined,
       lines,
       payment: data.payment,
+      billing: data.billing,
       movementType: 'dispensation',
       dispensationId,
     });

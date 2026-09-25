@@ -12,8 +12,9 @@ import { User } from '../models/User.js';
 import { gtDayEnd, gtDayStart, gtToday } from '../utils/dates.js';
 import { Errors, HttpError } from '../utils/httpError.js';
 import { op } from '../utils/trusted.js';
-import type { ListSalesInput, PaymentInput, SaleItemsInput } from '../validation/sales.schemas.js';
+import type { BillingInput, ListSalesInput, PaymentInput, SaleItemsInput } from '../validation/sales.schemas.js';
 import { appendAudit, runAuditedTransaction, type AuditContext, type AuditedTx } from './audit.service.js';
+import { resolveBilling } from './billing.service.js';
 import { applyLotDelta } from './inventory.service.js';
 
 /** Loyalty rule (decision D-14): 1 point per Q10 of the total. */
@@ -54,6 +55,11 @@ export function saleDto(
     })),
     totalCents: sale.totalCents,
     payment: sale.payment,
+    billing: {
+      type: sale.billing?.type ?? 'CF',
+      name: sale.billing?.name ?? 'Consumidor final',
+      taxIdDisplay: sale.billing?.taxIdDisplay ?? null,
+    },
     pointsEarned: sale.pointsEarned,
     fromPrescription: sale.dispensationId !== null,
     status: sale.status,
@@ -173,6 +179,7 @@ interface PersistSaleArgs {
   customerId: string | undefined;
   lines: AllocatedLine[];
   payment: PaymentInput;
+  billing: BillingInput;
   movementType: 'sale' | 'dispensation';
   dispensationId?: Types.ObjectId;
 }
@@ -183,6 +190,7 @@ export async function persistSale(args: PersistSaleArgs): Promise<ISale> {
   const { session } = tx;
   const totalCents = lines.reduce((sum, l) => sum + l.item.lineTotalCents, 0);
   const payment = buildPayment(args.payment, totalCents);
+  const billing = await resolveBilling(args.billing, totalCents, args.cashierId, tx);
 
   let customerId: Types.ObjectId | null = null;
   let pointsEarned = 0;
@@ -208,6 +216,7 @@ export async function persistSale(args: PersistSaleArgs): Promise<ISale> {
         items: lines.map((l) => l.item),
         totalCents,
         payment,
+        billing,
         pointsEarned,
         dispensationId: args.dispensationId ?? null,
       },
@@ -241,7 +250,7 @@ export async function persistSale(args: PersistSaleArgs): Promise<ISale> {
 }
 
 export async function createSale(
-  data: { customerId?: string | undefined; items: SaleItemsInput; payment: PaymentInput },
+  data: { customerId?: string | undefined; items: SaleItemsInput; payment: PaymentInput; billing?: BillingInput },
   actorId: string,
   ctx: AuditContext,
 ) {
@@ -266,6 +275,7 @@ export async function createSale(
       customerId: data.customerId,
       lines,
       payment: data.payment,
+      billing: data.billing ?? { type: 'CF' },
       movementType: 'sale',
     });
     tx.audit({
@@ -277,6 +287,7 @@ export async function createSale(
         saleNumber: created.saleNumber,
         totalCents: created.totalCents,
         method: created.payment.method,
+        billingType: created.billing.type,
         items: created.items.length,
         withCustomer: created.customerId !== null,
       },

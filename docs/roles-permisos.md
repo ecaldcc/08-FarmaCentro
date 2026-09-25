@@ -155,3 +155,12 @@ Leyenda: ✅ permitido · 🔸 permitido con restricción (ver nota) · — dene
 ## 5. Revisión de accesos
 
 El reporte "Usuarios y roles" (con exportación CSV) sirve de insumo para la revisión trimestral de accesos del control 5.18. La revisión en sí es un procedimiento: queda como "solo documentado".
+
+## 6. Facturación (agregado el 25/09/2026)
+
+| Acción | Admin | Regente | Cajero | Bodeguero | Auditor | 2FA | Bitácora |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|---|
+| Consultar comprador por NIT/DPI | — | ✅ | ✅ | — | — | No | `billing_party.viewed` |
+| Registrar comprador nuevo al cobrar | — | ✅ | ✅ | — | — | No | `billing_party.created` |
+
+`sale.created` incluye ahora `billingType` en sus detalles.

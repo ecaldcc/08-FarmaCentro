@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { PRESCRIPTION_STATUSES } from '../models/Prescription.js';
 import { IsoDate, ObjectId, Page, PersonName, Qty, Reason } from './common.js';
-import { Payment, SaleItems } from './sales.schemas.js';
+import { Billing, Payment, SaleItems } from './sales.schemas.js';
 
 export const ListPrescriptionsQuery = Page.extend({
   folio: z
@@ -45,6 +45,7 @@ export const CancelPrescriptionBody = z.strictObject({ reason: Reason });
 export const DispenseBody = z.strictObject({
   items: SaleItems.refine((items) => items.length <= 20, { message: 'Máximo 20 medicamentos' }),
   payment: Payment,
+  billing: Billing.default({ type: 'CF' }),
 });
 
 export type ListPrescriptionsInput = z.infer<typeof ListPrescriptionsQuery>;

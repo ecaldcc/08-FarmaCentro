@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router';
 import { ApiError, http, query } from '../../api/http';
 import type { CustomerSummary, Paged, Product, Sale } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
+import { PaymentModal } from '../../components/PaymentModal';
 import { QuantityInput } from '../../components/QuantityInput';
-import { Alert, Badge, Button, Empty, ErrorAlert, Field, Modal, Money, PageHeader } from '../../components/ui';
-import { formatMoney, parseQuetzales } from '../../utils/format';
+import { Badge, Button, Empty, ErrorAlert, Field, Money, PageHeader } from '../../components/ui';
+import { formatMoney } from '../../utils/format';
 
 interface CartLine {
   product: Product;
@@ -203,83 +204,17 @@ export function PosPage() {
         <PaymentModal
           total={total}
           onClose={() => setPaying(false)}
-          onPay={async (payment) => {
+          onPay={async (payment, billing) => {
             const sale = await http.post<Sale>('/sales', {
               ...(customer ? { customerId: customer.id } : {}),
               items: cart.map((l) => ({ productId: l.product.id, quantity: l.quantity })),
               payment,
+              billing,
             });
             navigate(`/ventas/${sale.id}/comprobante`);
           }}
         />
       )}
     </>
-  );
-}
-
-type Payment = { method: 'cash'; amountReceivedCents: number } | { method: 'card_simulated' };
-
-/** K2 — Simulated payment. There are intentionally no card fields. */
-export function PaymentModal({
-  total,
-  onClose,
-  onPay,
-}: {
-  total: number;
-  onClose: () => void;
-  onPay: (payment: Payment) => Promise<void>;
-}) {
-  const [method, setMethod] = useState<'cash' | 'card_simulated'>('cash');
-  const [received, setReceived] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<unknown>(null);
-  const receivedCents = parseQuetzales(received);
-  const change = receivedCents !== null ? receivedCents - total : null;
-
-  const pay = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await onPay(method === 'cash' ? { method: 'cash', amountReceivedCents: receivedCents ?? 0 } : { method: 'card_simulated' });
-    } catch (e) {
-      setError(e);
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Modal title={`Cobrar ${formatMoney(total)}`} onClose={busy ? undefined : onClose}>
-      <div className="segmented" role="radiogroup" aria-label="Forma de pago">
-        <button type="button" className={method === 'cash' ? 'active' : ''} onClick={() => setMethod('cash')} aria-pressed={method === 'cash'}>
-          Efectivo
-        </button>
-        <button
-          type="button"
-          className={method === 'card_simulated' ? 'active' : ''}
-          onClick={() => setMethod('card_simulated')}
-          aria-pressed={method === 'card_simulated'}
-        >
-          Tarjeta (simulada)
-        </button>
-      </div>
-      {method === 'cash' ? (
-        <>
-          <Field label="Efectivo recibido (Q)">
-            {(id) => <input id={id} inputMode="decimal" value={received} onChange={(e) => setReceived(e.target.value)} autoFocus />}
-          </Field>
-          {change !== null && change >= 0 && <p>Cambio: {formatMoney(change)}</p>}
-          {change !== null && change < 0 && <small className="field-error">El efectivo no alcanza.</small>}
-        </>
-      ) : (
-        <Alert kind="info">
-          Pago simulado: en una sucursal real el cobro lo hace la terminal P2PE del procesador. Aquí solo se genera una
-          referencia de autorización ficticia.
-        </Alert>
-      )}
-      <ErrorAlert error={error} />
-      <Button onClick={() => void pay()} busy={busy} disabled={method === 'cash' && (change === null || change < 0)}>
-        {method === 'cash' ? 'Registrar pago' : 'Aprobar pago simulado'}
-      </Button>
-    </Modal>
   );
 }

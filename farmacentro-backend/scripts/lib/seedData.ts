@@ -132,6 +132,8 @@ export async function seedDemoData(seedPassword: string, isProduction: boolean):
         { productId: productIds['SUERO-ORAL']!, quantity: 3 },
       ],
       payment: { method: 'card_simulated' },
+      // Fictitious NIT with a valid check digit.
+      billing: { type: 'NIT', taxId: '12345679', name: 'María Fernanda López' },
     },
     ids.cajero!,
     ctx('cajero'),
@@ -163,7 +165,11 @@ export async function seedDemoData(seedPassword: string, isProduction: boolean):
   );
   await prescriptions.dispensePrescription(
     recipe.id,
-    { items: [{ productId: productIds['AMOX-500']!, quantity: 1 }], payment: { method: 'card_simulated' } },
+    {
+      items: [{ productId: productIds['AMOX-500']!, quantity: 1 }],
+      payment: { method: 'card_simulated' },
+      billing: { type: 'CF' },
+    },
     ids.regente!,
     ctx('regente'),
     null,
