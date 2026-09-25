@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 import { http } from '../../api/http';
 import type { PrescriptionDetail, Product, Sale } from '../../api/types';
 import { useStepUp } from '../../auth/StepUp';
+import { QuantityInput } from '../../components/QuantityInput';
 import { Alert, Badge, Button, ErrorAlert, Loading, PageHeader, ReasonDialog } from '../../components/ui';
 import { formatDate, PRESCRIPTION_STATUS_LABELS } from '../../utils/format';
 import { PaymentModal } from '../pos/PosPage';
@@ -99,19 +100,12 @@ export function PrescriptionDetailPage() {
                   <td>{item.quantityDispensed}</td>
                   {canDispense && (
                     <td>
-                      <input
-                        type="number"
-                        className="qty"
+                      <QuantityInput
+                        value={quantities[item.productId] ?? 0}
                         min={0}
                         max={item.quantityRemaining}
-                        value={quantities[item.productId] ?? 0}
-                        aria-label={`Cantidad a despachar de ${item.productName}`}
-                        onChange={(e) =>
-                          setQuantities({
-                            ...quantities,
-                            [item.productId]: Math.max(0, Math.min(Number(e.target.value), item.quantityRemaining)),
-                          })
-                        }
+                        label={`cantidad a despachar de ${item.productName}`}
+                        onChange={(quantity) => setQuantities({ ...quantities, [item.productId]: quantity })}
                       />
                     </td>
                   )}

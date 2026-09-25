@@ -640,7 +640,7 @@ select:disabled {
 }
 .prescription-item {
   display: grid;
-  grid-template-columns: minmax(140px, 1fr) minmax(180px, 2fr) 5.5rem auto;
+  grid-template-columns: minmax(140px, 1fr) minmax(180px, 2fr) auto auto;
   gap: 0.5rem;
   align-items: center;
 }
@@ -696,4 +696,45 @@ select:disabled {
     box-shadow: none;
     border: none;
   }
+}
+
+/* Quantity control: − [ n ] + */
+.qty-control {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.qty-control:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.qty-control input {
+  width: 3.5rem;
+  border: none;
+  border-radius: 0;
+  text-align: center;
+  padding: 0.4rem 0.25rem;
+}
+.qty-control input:focus {
+  outline: none;
+}
+.qty-control button {
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  width: 2.2rem;
+  border: none;
+  background: var(--bg);
+  color: var(--primary);
+  cursor: pointer;
+}
+.qty-control button:hover:not(:disabled) {
+  background: var(--primary-soft);
+}
+.qty-control button:disabled {
+  color: var(--border);
+  cursor: not-allowed;
 }

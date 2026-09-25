@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { ApiError, http, query } from '../../api/http';
 import type { CustomerSummary, Paged, Product } from '../../api/types';
+import { QuantityInput } from '../../components/QuantityInput';
 import { Alert, Badge, Button, ErrorAlert, Field, PageHeader } from '../../components/ui';
 import { todayGt } from '../../utils/format';
 
@@ -157,13 +158,12 @@ export function NewPrescriptionPage() {
               value={item.dosage}
               onChange={(e) => setItems(items.map((it, i) => (i === index ? { ...it, dosage: e.target.value } : it)))}
             />
-            <input
-              aria-label={`Cantidad de ${item.product.name}`}
-              type="number"
-              min={1}
-              className="qty"
+            <QuantityInput
               value={item.quantityPrescribed}
-              onChange={(e) => setItems(items.map((it, i) => (i === index ? { ...it, quantityPrescribed: Number(e.target.value) } : it)))}
+              min={1}
+              max={10000}
+              label={`cantidad de ${item.product.name}`}
+              onChange={(quantity) => setItems(items.map((it, i) => (i === index ? { ...it, quantityPrescribed: quantity } : it)))}
             />
             <button type="button" className="icon-btn" aria-label="Quitar" onClick={() => setItems(items.filter((_, i) => i !== index))}>
               ×

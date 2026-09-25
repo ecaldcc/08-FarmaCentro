@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import { ApiError, http, query } from '../../api/http';
 import type { CustomerSummary, Paged, Product, Sale } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
+import { QuantityInput } from '../../components/QuantityInput';
 import { Alert, Badge, Button, Empty, ErrorAlert, Field, Modal, Money, PageHeader } from '../../components/ui';
 import { formatMoney, parseQuetzales } from '../../utils/format';
 
@@ -128,14 +129,12 @@ export function PosPage() {
                   <tr key={line.product.id}>
                     <td>{line.product.name}</td>
                     <td>
-                      <input
-                        type="number"
-                        className="qty"
+                      <QuantityInput
+                        value={line.quantity}
                         min={1}
                         max={line.product.stock}
-                        value={line.quantity}
-                        aria-label={`Cantidad de ${line.product.name}`}
-                        onChange={(e) => setQuantity(line.product.id, Number(e.target.value))}
+                        label={`cantidad de ${line.product.name}`}
+                        onChange={(quantity) => setQuantity(line.product.id, quantity)}
                       />
                     </td>
                     <td>
