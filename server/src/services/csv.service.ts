@@ -1,5 +1,6 @@
 import { stringify } from 'csv-stringify/sync';
 
+const BOM = String.fromCharCode(0xfeff);
 const FORMULA_START = /^[=+\-@\t\r]/;
 
 /**
@@ -15,5 +16,5 @@ export function safeCell(value: unknown): string {
 /** CSV with UTF-8 BOM (so Excel shows accents correctly). */
 export function toCsv(columns: { key: string; header: string }[], rows: Record<string, unknown>[]): string {
   const data = rows.map((row) => columns.map((c) => safeCell(row[c.key])));
-  return `﻿${stringify([columns.map((c) => c.header), ...data])}`;
+  return `${BOM}${stringify([columns.map((c) => c.header), ...data])}`;
 }

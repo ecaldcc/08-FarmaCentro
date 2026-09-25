@@ -29,7 +29,8 @@
     "verify-audit": "tsx scripts/verify-audit-chain.ts",
     "check-db-privileges": "tsx scripts/check-db-privileges.ts",
     "backup": "tsx scripts/backup.ts",
-    "restore-test": "tsx scripts/restore-test.ts"
+    "restore-test": "tsx scripts/restore-test.ts",
+    "dev:mail": "tsx scripts/dev-mail.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
