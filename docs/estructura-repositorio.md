@@ -2,6 +2,8 @@
 
 > Documento de diseño (versión inicial, 24/09/2026). Controles: 8.4, 8.8, 8.25, 8.27, 8.31, 8.32.
 
+> **Actualización 25/09/2026:** a pedido del equipo, el backend y el frontend son **dos proyectos totalmente separados**, sin npm workspaces: `/server` → `/farmacentro-backend` (incluye `/farmacentro-backend/scripts`) y `/client` → `/Farmacentro-Frontend`. Cada uno tiene su `package.json`, su `package-lock.json`, su `eslint.config.js` y su `npm run dev`. En desarrollo se usa el MongoDB local como replica set `rs0` y los correos se muestran en la terminal del backend (`MAIL_TRANSPORT=console`). Se eliminaron `dev-memory-db.ts`, `dev-mail.ts` y `docker-compose.yml`, y se agregó `scripts/init-replica-set.ts`. El árbol siguiente conserva los nombres de carpeta anteriores del diseño.
+
 ## 1. Organización general
 
 - Un solo repositorio con **npm workspaces** (`client`, `server`) y **un solo `package-lock.json` en la raíz**, versionado.

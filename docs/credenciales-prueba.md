@@ -1,6 +1,6 @@
 # Credenciales de prueba
 
-> Solo **datos ficticios**. Estas credenciales las crea `npm run seed` en un ambiente **de desarrollo local**.
+> Solo **datos ficticios**. Estas credenciales se crean solas la primera vez que ejecutas `npm run dev` en `farmacentro-backend` con la base vacía (o con `npm run seed -- --reset`), en un ambiente **de desarrollo local**.
 > El repositorio es público: **no uses esta contraseña en un despliegue accesible desde Internet.** En producción, `scripts/seed.ts` se niega a correr sin `SEED_PASSWORD` y obliga a cada usuario a cambiar su contraseña al entrar.
 
 ## Usuarios (desarrollo local)
@@ -15,7 +15,7 @@ Contraseña de demostración para todos: `FarmaCentro-Demo-2026!`
 | `bodeguero` | Bodeguero | bodeguero@farmacentro.test | Inventario |
 | `auditor` | Auditor | auditor@farmacentro.test | Bitácora |
 
-Los correos `@farmacentro.test` no existen: en local, los códigos de 6 dígitos se leen en Mailpit (http://localhost:8025) o en la consola de `npm run dev:mail`.
+Los correos `@farmacentro.test` no existen: en desarrollo (`MAIL_TRANSPORT=console`), el código de 6 dígitos aparece en la **terminal del backend** (`npm run dev` en `farmacentro-backend`).
 
 ## Datos sembrados
 
@@ -25,4 +25,4 @@ Los correos `@farmacentro.test` no existen: en local, los códigos de 6 dígitos
 
 ## Despliegue para el grupo auditor
 
-Las credenciales del ambiente desplegado **no se escriben en este repositorio**. Se entregan al grupo auditor por un canal privado, junto con el ancla de la bitácora (decisión D-10).
+Las credenciales del ambiente desplegado **no se escriben en este repositorio**. Allí los correos deben ser reales, porque el código se envía por SMTP. Se entregan al grupo auditor por un canal privado, junto con el ancla de la bitácora (decisión D-10).
