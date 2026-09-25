@@ -12,7 +12,8 @@
 - Frontend: React + TypeScript (Vite).
 - Backend: Node.js + Express + TypeScript, en capas `routes → controllers → services → models`.
 - Base de datos: MongoDB Atlas (plan gratuito) con Mongoose.
-- Estructura del repositorio: `/client`, `/server`, `/docs`, `/scripts`.
+- Estructura del repositorio: dos proyectos totalmente separados, cada uno con su `package.json` y su `npm run dev`: `/farmacentro-backend` (API; incluye `/farmacentro-backend/scripts`) y `/Farmacentro-Frontend` (cliente). La documentación va en `/docs`.
+- Base de datos en desarrollo: el MongoDB local de la PC como replica set `rs0` (necesario para transacciones) mientras se configura Atlas.
 - Idioma: interfaz y documentación en español; código, nombres de variables y commits en inglés.
 
 ## Módulos
@@ -68,7 +69,7 @@
 Tienda en línea, modo de contingencia del POS, red/VLAN/firewall, terminales P2PE y EDR. Márcalos como "solo documentado" en la matriz de controles.
 
 ## Datos de prueba
-- `scripts/seed.ts` con datos ficticios y un usuario por rol.
+- `farmacentro-backend/scripts/seed.ts` con datos ficticios y un usuario por rol (se carga sola la primera vez que se ejecuta `npm run dev` con la base vacía).
 - Las credenciales de prueba van en `docs/credenciales-prueba.md`, no en el README.
 
 ## Pruebas
