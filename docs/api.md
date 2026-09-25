@@ -169,7 +169,7 @@ body = z.strictObject({ code: Code6 })
 
 **7. `POST /auth/logout`** — body `{}` · 204. Destruye la sesión en `sessions` y borra la cookie.
 
-**8. `GET /auth/me`** — 200 `{ user: { id, username, fullName, role, mustChangePassword, hasWebAuthn }, permissions: string[], sessionExpiresAt }`. `permissions` solo sirve para que el cliente oculte opciones. **No renueva** la sesión (se excluye de `rolling`) para que el aviso de inactividad sea fiable.
+**8. `GET /auth/me`** — 200 `{ user: { id, username, fullName, role, mustChangePassword, hasWebAuthn }, permissions: string[], sessionExpiresAt }`. `permissions` solo sirve para que el cliente oculte opciones. Como toda petición autenticada, renueva la sesión; por eso el cliente solo la llama al cargar y al pulsar "Seguir trabajando", nunca en sondeos. Cada respuesta autenticada trae la cabecera `X-Session-Expires-At`.
 
 **9. `POST /auth/password/change`**
 ```ts
@@ -192,7 +192,7 @@ body = z.strictObject({ response: WebAuthnAuthResponse })
 
 **12. `POST /auth/step-up/email-otp/send`** · `otpSendLimiter` — body como 10. 200 `{ expiresAt, sentTo }`. 403 si la política (D-03) no permite correo para esa `action`.
 
-**13. `POST /auth/step-up/email-otp/verify`** · `mfaLimiter` — body `{ code: Code6 }`. Respuestas como 11.
+**13. `POST /auth/step-up/email-otp/verify`** · `mfaLimiter` — body `{ action, targetId, code: Code6 }` (la acción y el registro deben coincidir con los del código enviado). Respuestas como 11.
 
 ### 3.3 Huellas de la cuenta propia
 
