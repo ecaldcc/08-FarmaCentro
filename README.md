@@ -40,7 +40,7 @@ La re-autenticación (step-up) sirve para **una sola operación**, queda ligada 
 | Ambiente | Enlace | Estado |
 |---|---|---|
 | Producción (entrega al grupo auditor) | _pendiente: pegar aquí el enlace cuando se despliegue_ | ⏳ Sin desplegar |
-| Repositorio | https://github.com/<usuario>/08-FarmaCentro | — |
+| Repositorio | https://github.com/ecaldcc/08-FarmaCentro | ✅ Público |
 
 Requisitos del despliegue: HTTPS y el **mismo dominio para el cliente y la API**. La cookie `SameSite=Strict` y WebAuthn lo exigen. Se compila el frontend (`npm run build` en `Farmacentro-Frontend`) y el backend lo sirve con `SERVE_CLIENT=true`, `NODE_ENV=production`, `CLIENT_ORIGIN` y `RP_ID` con el dominio público. Detalles en [docs/manual-instalacion.md](docs/manual-instalacion.md).
 
