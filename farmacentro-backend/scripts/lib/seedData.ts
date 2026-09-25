@@ -14,6 +14,18 @@ import { gtToday } from '../../src/utils/dates.js';
 export const DEV_PASSWORD = 'FarmaCentro-Demo-2026!';
 
 /**
+ * E-mail of each demo user. Locally the fictitious @farmacentro.test addresses are enough (codes are
+ * printed in the terminal). When deployed, codes are really sent: with SEED_EMAIL=equipo@gmail.com
+ * every user gets a sub-address of that mailbox (equipo+regente@gmail.com), which Gmail delivers.
+ */
+export function demoEmail(username: string, seedEmail = process.env.SEED_EMAIL): string {
+  if (!seedEmail) return `${username}@farmacentro.test`;
+  const [local, domain] = seedEmail.trim().toLowerCase().split('@');
+  if (!local || !domain) throw new Error('SEED_EMAIL debe ser un correo válido');
+  return `${local}+${username}@${domain}`;
+}
+
+/**
  * Fictitious demo data: one user per role, catalog, lots, customers with consent, sales, a void
  * and a prescription. Everything goes through the real services, so the audit log is populated.
  * Import this module only AFTER the environment is loaded (src/config/env.ts validates on import).
@@ -37,7 +49,7 @@ export async function seedDemoData(seedPassword: string, isProduction: boolean):
   for (const u of USERS) {
     const user = await User.create({
       ...u,
-      email: `${u.username}@farmacentro.test`,
+      email: demoEmail(u.username),
       passwordHash,
       passwordChangedAt: new Date(),
       mustChangePassword: isProduction, // in production every account must pick its own password

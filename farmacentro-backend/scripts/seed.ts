@@ -17,6 +17,10 @@ if (!seedPassword) {
   console.error('En producción define SEED_PASSWORD (la contraseña de demostración es pública en el repositorio).');
   process.exit(1);
 }
+if (isProduction && !process.env.SEED_EMAIL) {
+  console.error('En producción define SEED_EMAIL (un correo real del equipo): allí llegan los códigos de los usuarios de prueba.');
+  process.exit(1);
+}
 
 const mongoose = (await import('mongoose')).default;
 const { assertReplicaSet } = await import('../src/db/replicaSet.js');

@@ -1,6 +1,7 @@
 import nodemailer, { type Transporter } from 'nodemailer';
 import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
+import { parseSender, sendViaBrevo } from './brevo.js';
 
 export interface MailMessage {
   to: string;
@@ -41,6 +42,10 @@ ${message.text}
 ───────────────────────────────────────────────────
 `,
     );
+    return;
+  }
+  if (env.MAIL_TRANSPORT === 'brevo') {
+    await sendViaBrevo(env.BREVO_API_KEY ?? '', parseSender(env.MAIL_FROM), message);
     return;
   }
   await getTransporter().sendMail({ from: env.MAIL_FROM, ...message });

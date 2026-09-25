@@ -15,6 +15,17 @@ export const EVIDENCE_DIR = path.join(REPO_ROOT, 'docs/evidencias');
  * src/config/env.ts validates the environment at import time.
  */
 export function loadScriptEnv(): void {
+  // `--env=.env.production` loads only that file (e.g. Atlas + production keys, never committed).
+  const explicit = process.argv.find((a) => a.startsWith('--env='))?.slice('--env='.length);
+  if (explicit) {
+    const file = path.resolve(ROOT, explicit);
+    if (!existsSync(file)) {
+      console.error(`No existe ${explicit}. Crea el archivo a partir de .env.example (no se sube a Git).`);
+      process.exit(1);
+    }
+    process.loadEnvFile(file);
+    return;
+  }
   for (const file of [path.join(ROOT, 'scripts/.env'), path.join(ROOT, '.env')]) {
     if (existsSync(file)) {
       process.loadEnvFile(file);

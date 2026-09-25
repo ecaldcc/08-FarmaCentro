@@ -27,7 +27,8 @@ export const EnvSchema = z
     BCRYPT_COST: z.coerce.number().int().min(4).max(15).default(12),
     RP_ID: z.string().min(1),
     RP_NAME: z.string().min(1).default('FarmaCentro'),
-    MAIL_TRANSPORT: z.enum(['smtp', 'console', 'memory']).default('smtp'),
+    MAIL_TRANSPORT: z.enum(['smtp', 'brevo', 'console', 'memory']).default('smtp'),
+    BREVO_API_KEY: z.string().min(20).optional(),
     SMTP_HOST: z.string().default('localhost'),
     SMTP_PORT: z.coerce.number().int().default(1025),
     SMTP_SECURE: boolFromString.default(false),
@@ -49,6 +50,13 @@ export const EnvSchema = z
     // Relaxed throttling exists only so the automated tests can log in many times.
     if (env.NODE_ENV !== 'test' && (env.OTP_RESEND_SECONDS < 60 || env.RATE_LIMIT_FACTOR !== 1)) {
       ctx.addIssue({ code: 'custom', path: ['OTP_RESEND_SECONDS'], message: 'throttling can only be relaxed in tests' });
+    }
+    // WebAuthn only works when the RP ID is the domain the browser is on.
+    if (URL.canParse(env.CLIENT_ORIGIN) && new URL(env.CLIENT_ORIGIN).hostname !== env.RP_ID) {
+      ctx.addIssue({ code: 'custom', path: ['RP_ID'], message: 'must be the hostname of CLIENT_ORIGIN' });
+    }
+    if (env.MAIL_TRANSPORT === 'brevo' && !env.BREVO_API_KEY) {
+      ctx.addIssue({ code: 'custom', path: ['BREVO_API_KEY'], message: 'required when MAIL_TRANSPORT=brevo' });
     }
     // The console transport prints codes to the terminal: only for local development.
     if (env.NODE_ENV !== 'development' && env.MAIL_TRANSPORT === 'console') {

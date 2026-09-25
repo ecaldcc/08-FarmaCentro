@@ -26,3 +26,6 @@ Tienda en línea, modo de contingencia del POS, enlace 4G de respaldo, segmentac
 7. **Una sola sucursal (D-15):** no se modelan varias sucursales.
 8. **Lista de contraseñas prohibidas reducida (D-20):** se incluye una lista corta de contraseñas comunes de 12 caracteres o más.
 9. **MongoDB local sin usuarios:** en desarrollo la base local no tiene autenticación, por lo que no demuestra el rol personalizado de la API. Esa evidencia se genera contra Atlas con `npm run check-db-privileges`.
+10. **Render gratis se duerme:** tras 15 minutos sin tráfico la API tarda de 30 a 60 segundos en despertar; la primera petición a través del proxy de Netlify (unos 26 s de espera) puede fallar. Se recomienda abrir `/api/health` antes de una sesión de auditoría.
+11. **Acceso de red a Atlas:** si Render no ofrece IPs de salida fijas en la cuenta, la lista de acceso de Atlas queda en `0.0.0.0/0`. La protección recae en usuarios de base de datos con contraseñas largas, rol de mínimo privilegio y TLS obligatorio.
+12. **Correo por Brevo:** Render gratis bloquea el SMTP, por lo que los códigos se envían por la API HTTPS de Brevo (plan gratuito de 300 correos diarios). Brevo es un proveedor más dentro del alcance de 5.19–5.22.
