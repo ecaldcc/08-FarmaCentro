@@ -8,7 +8,7 @@
 | Componente | Tecnología | Responsabilidad | Confía en |
 |---|---|---|---|
 | Cliente web | React 19 + TypeScript (Vite) | Interfaz por rol, formularios, llamada a la API de WebAuthn del navegador. **No toma decisiones de seguridad**: solo oculta opciones. | Nada. Todo lo que envía se valida de nuevo en la API. |
-| API | Node.js 24 + Express 5 + TypeScript | Autenticación, sesiones, segundo factor, autorización por rol, validación (Zod), reglas de negocio, cifrado de campos, bitácora. | MongoDB Atlas y el servicio de correo. |
+| API | Node.js 22 + Express 5 + TypeScript | Autenticación, sesiones, segundo factor, autorización por rol, validación (Zod), reglas de negocio, cifrado de campos, bitácora. | MongoDB Atlas y el servicio de correo. |
 | Base de datos | MongoDB Atlas M0 (réplica de 3 nodos) + Mongoose 9 | Persistencia, transacciones, almacén de sesiones (`sessions`) y bitácora (`audit_logs`). | — |
 | Servicio de correo | Nodemailer 10 → SMTP (ver decisión pendiente D-06) | Envía códigos de 6 dígitos y avisos de seguridad (bloqueo, nueva huella, etc.). | — |
 | Autenticador del usuario | Windows Hello con lector de huella (WebAuthn, autenticador de plataforma) | Verifica la huella **en el dispositivo** y firma el desafío. El servidor solo recibe la firma. | — |
@@ -112,8 +112,8 @@ sequenceDiagram
     MW->>DB: loadUser: rol y estado actuales
     DB-->>MW: { role: "regente", status: "active" }
     MW->>RT: req.user
-    RT->>RT: requireAuth ✔ · requireRole("regente") ✔
-    RT->>RT: validate: params.id = ObjectId ✔
+    RT->>RT: requireAuth OK · requireRole("regente") OK
+    RT->>RT: validate: params.id = ObjectId OK
     RT->>CT: req.validated
     CT->>SV: getPrescription(id, actor)
     SV->>DB: findById(id)
@@ -162,7 +162,7 @@ stateDiagram-v2
 | Entorno | Cliente | API | Cómo se cumple |
 |---|---|---|---|
 | Desarrollo | Vite en `http://localhost:5173` | Express en `http://localhost:3000` | Vite hace de proxy de `/api` → el navegador solo ve `localhost:5173`. Chrome y Edge aceptan cookies `Secure` en `http://localhost`. |
-| Entrega al grupo auditor | Compilado (`client/dist`) | Express sirve `client/dist` y `/api` en el **mismo origen** con HTTPS | Un solo origen: CSP `'self'`, cookie `Secure`, WebAuthn con `RP_ID` = dominio. Ver decisión pendiente D-01. |
+| Entrega al grupo auditor | Compilado (`Farmacentro-Frontend/dist`) | Express sirve `Farmacentro-Frontend/dist` y `/api` en el **mismo origen** con HTTPS | Un solo origen: CSP `'self'`, cookie `Secure`, WebAuthn con `RP_ID` = dominio. Ver decisión pendiente D-01. |
 
 ## 8. Flujos de autenticación
 
@@ -271,7 +271,7 @@ sequenceDiagram
 
     U->>B: "Anular venta V-000123" + motivo
     B->>API: POST /api/sales/:id/void { reason }
-    API->>API: requireRole("regente") ✔ · validate ✔ · requireStepUp("sale.void", :id) ✘
+    API->>API: requireRole("regente") OK · validate OK · requireStepUp("sale.void", :id) falta
     API-->>B: 403 STEP_UP_REQUIRED { action: "sale.void", targetId, methods }
     B->>U: modal "Confirma con tu huella"
     B->>API: POST /api/auth/step-up/webauthn/options { action: "sale.void", targetId }

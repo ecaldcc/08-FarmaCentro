@@ -7,8 +7,8 @@
 
 | Marca | Significado |
 |---|---|
-| 🔒 | Campo **cifrado** con AES-256-GCM (ver §2). |
-| 🔑 | HMAC-SHA256 con clave del servidor (índice ciego o hash de código). No es reversible. |
+| [cifrado] | Campo **cifrado** con AES-256-GCM (ver §2). |
+| [HMAC] | HMAC-SHA256 con clave del servidor (índice ciego o hash de código). No es reversible. |
 | **P** | Dato personal (identifica o hace identificable a una persona). |
 | **S** | Dato de salud o que revela salud (receta, diagnóstico, medicamento dispensado a una persona). |
 | **S\*** | Salud **inferible**: no es un dato clínico, pero combinado con el cliente revela tratamientos (por ejemplo, el detalle de una venta con cliente). |
@@ -21,7 +21,7 @@
 
 ## 2. Formato de los campos cifrados
 
-Cada campo 🔒 se guarda como un subdocumento:
+Cada campo [cifrado] se guarda como un subdocumento:
 
 ```text
 { v: Int (versión de clave), iv: Binary(12 bytes), tag: Binary(16 bytes), ct: Binary }
@@ -31,7 +31,7 @@ Cada campo 🔒 se guarda como un subdocumento:
 - AAD (datos autenticados adicionales) = `"<colección>:<_id>:<campo>"`. Por eso el `_id` se genera en la aplicación **antes** de cifrar. Si alguien copia un cifrado a otro registro o a otro campo, el descifrado falla.
 - Los valores estructurados (por ejemplo, la lista de medicamentos de una receta) se serializan a JSON antes de cifrar.
 - Clave activa: `DATA_ENC_KEY_V<n>` en `.env`; `DATA_ENC_ACTIVE_VERSION` indica con cuál se cifra. Para descifrar se usa la versión guardada en `v`.
-- Un campo cifrado no se puede buscar ni ordenar. Donde hace falta buscar se agrega un índice ciego 🔑 (`HMAC-SHA256(BLIND_INDEX_KEY, valor_normalizado)`).
+- Un campo cifrado no se puede buscar ni ordenar. Donde hace falta buscar se agrega un índice ciego [HMAC] (`HMAC-SHA256(BLIND_INDEX_KEY, valor_normalizado)`).
 
 ## 3. Diagrama de relaciones
 
@@ -102,7 +102,7 @@ Nunca se devuelve `passwordHash` (el esquema lo marca `select: false`).
 | `userId` | ObjectId → users | | — |
 | `purpose` | String enum | `login` · `step_up` | — |
 | `action` / `targetId` | String / String \| null | Solo en `step_up`: acción y registro a los que queda ligado | — |
-| `codeHash` 🔑 | String | `HMAC-SHA256(OTP_HMAC_KEY, "<_id>:<código>")`. **Nunca se guarda el código.** | — |
+| `codeHash` [HMAC] | String | `HMAC-SHA256(OTP_HMAC_KEY, "<_id>:<código>")`. **Nunca se guarda el código.** | — |
 | `attempts` | Int | Máx. 5; al llegar se invalida | — |
 | `expiresAt` | Date | `createdAt + 5 min` | — |
 | `consumedAt` | Date \| null | Un solo uso | — |
@@ -196,10 +196,10 @@ Se recoge lo mínimo: nombre y un medio de contacto (teléfono o correo), más e
 | Campo | Tipo | Reglas | Clasif. |
 |---|---|---|---|
 | `fullName` | String | 3–100 (en claro, ver decisión D-12) | P |
-| `phone` 🔒 | Cifrado | 8 dígitos (Guatemala) | P |
-| `phoneHmac` 🔑 | String | Índice ciego para buscar por teléfono | P |
-| `email` 🔒 | Cifrado \| null | | P |
-| `emailHmac` 🔑 | String \| null | Índice ciego | P |
+| `phone` [cifrado] | Cifrado | 8 dígitos (Guatemala) | P |
+| `phoneHmac` [HMAC] | String | Índice ciego para buscar por teléfono | P |
+| `email` [cifrado] | Cifrado \| null | | P |
+| `emailHmac` [HMAC] | String \| null | Índice ciego | P |
 | `consent` | Objeto | `{ accepted: true, noticeVersion, acceptedAt, recordedBy, channel: 'mostrador' }` — **obligatorio** para crear | P |
 | `consentWithdrawnAt` | Date \| null | Al retirar el consentimiento se anonimizan nombre y contacto | — |
 | `pointsBalance` | Int | ≥ 0 | — |
@@ -229,12 +229,12 @@ Colección separada del resto de datos comerciales (ISO 27799). Todo lo clínico
 |---|---|---|---|
 | `folio` | String | `R-000001`, desde `counters` | — |
 | `customerId` | ObjectId → customers \| null | Opcional (paciente fidelizado) | P (vínculo) |
-| `patientName` 🔒 | Cifrado | 3–100 | P, S |
-| `doctorName` 🔒 | Cifrado | 3–100 | P |
-| `doctorLicense` 🔒 | Cifrado | Número de colegiado, 1–20 | P |
+| `patientName` [cifrado] | Cifrado | 3–100 | P, S |
+| `doctorName` [cifrado] | Cifrado | 3–100 | P |
+| `doctorLicense` [cifrado] | Cifrado | Número de colegiado, 1–20 | P |
 | `issuedAt` | Date | Fecha de emisión (no futura; vigencia en D-16) | — |
-| `items` 🔒 | Cifrado (JSON) | `[{ productId, productName, dosage, quantityPrescribed }]` | S |
-| `notes` 🔒 | Cifrado \| null | Indicaciones, 0–500 | S |
+| `items` [cifrado] | Cifrado (JSON) | `[{ productId, productName, dosage, quantityPrescribed }]` | S |
+| `notes` [cifrado] | Cifrado \| null | Indicaciones, 0–500 | S |
 | `hasControlled` | Boolean | Si incluye algún producto controlado (para exigir re-autenticación sin descifrar) | S\* |
 | `status` | String enum | `registered` · `partially_dispensed` · `dispensed` · `cancelled` | — |
 | `registeredBy` | ObjectId → users (Regente) | | — |
@@ -333,10 +333,10 @@ En Atlas los roles personalizados se crean desde la interfaz (Database Access �
 | Usuario | Rol | Privilegios | Quién lo usa |
 |---|---|---|---|
 | `farmacentro_api` | Personalizado `farmacentroApi` | Exactamente los de la última columna de §5, por colección, en la base `farmacentro`. **Sin** `remove` (salvo `sessions`), `createIndex`, `dropCollection`, `collMod` ni acceso a otras bases. | La API (`MONGODB_URI` en `server/.env`) |
-| `farmacentro_migrator` | Integrados `readWrite` + `dbAdmin` sobre `farmacentro` | Crear colecciones e índices, sembrar datos, respaldos. | Solo `scripts/` desde la máquina del equipo (`MONGODB_URI_ADMIN`, fuera de `server/.env`) |
+| `farmacentro_migrator` | Integrados `readWrite` + `dbAdmin` sobre `farmacentro` | Crear colecciones e índices, sembrar datos, respaldos. | Solo los scripts de `farmacentro-backend/scripts` desde la máquina del equipo (`MONGODB_URI_ADMIN` en `scripts/.env`, nunca en el `.env` de la API) |
 | `farmacentro_audit_reader` | Personalizado `auditReader` | `find` sobre `audit_logs` únicamente | Grupo auditor, para verificar la cadena por su cuenta (decisión D-11) |
 
-**Evidencia prevista**: captura de la definición del rol en Atlas y la salida de `scripts/check-db-privileges.ts`, que con el usuario de la API ejecuta `connectionStatus` con `showPrivileges: true` e intenta un `updateOne` y un `deleteOne` sobre `audit_logs`, esperando el error `Unauthorized`.
+**Evidencia prevista**: captura de la definición del rol en Atlas y la salida de `npm run check-db-privileges`, que con el usuario de la API ejecuta `connectionStatus` con `showPrivileges: true` e intenta un `updateOne` y un `deleteOne` sobre `audit_logs`, esperando el error `Unauthorized`.
 
 ## 7. Transacciones
 
@@ -360,8 +360,8 @@ Al cobrar se elige cómo se identifica al comprador en el comprobante: **CF** (c
 | Campo | Tipo | Reglas | Clasif. |
 |---|---|---|---|
 | `type` | String enum | `NIT` · `CUI` | — |
-| `taxId` 🔒 | Cifrado | NIT validado por dígito verificador (0–9 o K); CUI de 13 dígitos con dígito verificador y departamento 01–22 | P |
-| `taxIdHmac` 🔑 | String | Índice ciego `HMAC(BLIND_INDEX_KEY, "<type>:<número>")` | P |
+| `taxId` [cifrado] | Cifrado | NIT validado por dígito verificador (0–9 o K); CUI de 13 dígitos con dígito verificador y departamento 01–22 | P |
+| `taxIdHmac` [HMAC] | String | Índice ciego `HMAC(BLIND_INDEX_KEY, "<type>:<número>")` | P |
 | `name` | String | 3–150; se pide solo la primera vez que se usa ese NIT/DPI | P |
 | `createdBy` | ObjectId → users | | — |
 

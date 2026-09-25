@@ -1,191 +1,100 @@
 # Estructura del repositorio y dependencias
 
-> Documento de diseño (versión inicial, 24/09/2026). Controles: 8.4, 8.8, 8.25, 8.27, 8.31, 8.32.
-
-> **Actualización 25/09/2026:** a pedido del equipo, el backend y el frontend son **dos proyectos totalmente separados**, sin npm workspaces: `/server` → `/farmacentro-backend` (incluye `/farmacentro-backend/scripts`) y `/client` → `/Farmacentro-Frontend`. Cada uno tiene su `package.json`, su `package-lock.json`, su `eslint.config.js` y su `npm run dev`. En desarrollo se usa el MongoDB local como replica set `rs0` y los correos se muestran en la terminal del backend (`MAIL_TRANSPORT=console`). Se eliminaron `dev-memory-db.ts`, `dev-mail.ts` y `docker-compose.yml`, y se agregó `scripts/init-replica-set.ts`. El árbol siguiente conserva los nombres de carpeta anteriores del diseño.
+> Versión actual (25/09/2026). Controles relacionados: 8.4, 8.8, 8.25, 8.27, 8.31, 8.32.
 
 ## 1. Organización general
 
-- Un solo repositorio con **npm workspaces** (`client`, `server`) y **un solo `package-lock.json` en la raíz**, versionado.
-- `scripts/` no es un workspace: sus archivos se ejecutan con `tsx` desde la raíz y reutilizan los modelos de `server/src/models` (así la siembra y la API usan los mismos esquemas).
-- Entorno: **Node.js 22.16.0** (archivo `.nvmrc`, decisión D-04 resuelta). Las variables de entorno se cargan con `--env-file` / `process.loadEnvFile` de Node, sin `dotenv`.
-- `.npmrc` con `save-exact=true`: las versiones quedan fijas (sin `^`), así cada actualización es un cambio explícito y revisable.
+- El repositorio contiene **dos proyectos totalmente separados**: `farmacentro-backend/` (API) y `Farmacentro-Frontend/` (cliente web). Cada uno tiene su `package.json`, su `package-lock.json` versionado, su `eslint.config.js` y su comando `npm run dev`. No hay nada que instalar ni ejecutar en la raíz.
+- La documentación y las evidencias para el grupo auditor están en `docs/`.
+- Entorno: **Node.js 22.16.0** (archivo `.nvmrc`). Las variables de entorno se cargan con `--env-file` y `process.loadEnvFile` de Node, sin la dependencia `dotenv`.
+- `.npmrc` con `save-exact=true` en cada proyecto: las versiones quedan fijas (sin `^`), así cada actualización es un cambio explícito y revisable.
+- Base de datos en desarrollo: MongoDB local configurado como replica set `rs0` (necesario para transacciones), con la misma conexión que MongoDB Compass (`mongodb://localhost:27017/`). Para la entrega: MongoDB Atlas.
 
 ```text
 Farmacentro/
 ├── .editorconfig
-├── .gitignore                  # .env, .env.*, !.env.example, node_modules, dist, coverage, *.log, backups/
-├── .npmrc                      # save-exact=true, audit-level=high
-├── .nvmrc                      # 24
-├── CLAUDE.md
-├── README.md                   # instalación rápida; SIN credenciales (van en docs/credenciales-prueba.md)
-├── eslint.config.js            # reglas TS + security + react-hooks; prohíbe dangerouslySetInnerHTML y eval
-├── package.json                # workspaces, scripts de raíz (lint, test, audit:check, seed, setup-db, verify-audit)
-├── package-lock.json
+├── .gitattributes
+├── .gitignore                  # .env, node_modules, dist, coverage, backups, .claude
+├── .nvmrc                      # 22.16.0
+├── CLAUDE.md                   # reglas del proyecto
+├── README.md                   # descripción, despliegue y cómo ejecutarlo
 │
-├── client/
-│   ├── index.html
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── vite.config.ts          # proxy /api → http://localhost:3000 en desarrollo; sin sourcemaps en build
-│   └── src/
-│       ├── main.tsx
-│       ├── App.tsx
-│       ├── router.tsx          # rutas por rol (pantallas.md)
-│       ├── api/
-│       │   ├── http.ts         # fetch con credentials:'same-origin', JSON, manejo 401 / 403 STEP_UP_REQUIRED
-│       │   ├── auth.api.ts
-│       │   ├── users.api.ts
-│       │   ├── products.api.ts
-│       │   ├── inventory.api.ts
-│       │   ├── sales.api.ts
-│       │   ├── customers.api.ts
-│       │   ├── prescriptions.api.ts
-│       │   ├── audit.api.ts
-│       │   └── reports.api.ts
-│       ├── auth/
-│       │   ├── AuthProvider.tsx        # usuario en memoria (nunca en localStorage/sessionStorage)
-│       │   ├── RequireRole.tsx         # oculta rutas; la API decide de verdad
-│       │   ├── StepUpProvider.tsx      # modal C6 de re-autenticación
-│       │   ├── useInactivityWarning.ts # aviso a los 13 min
-│       │   └── webauthn.ts             # envoltura de @simplewebauthn/browser
-│       ├── components/         # Layout, Sidebar, DataTable, ReasonDialog, MoneyInput, DateRangePicker…
-│       ├── pages/
-│       │   ├── login/          # C1, C2, C3
-│       │   ├── account/        # C4, C5
-│       │   ├── users/          # A1–A3
-│       │   ├── pos/            # K1, K2, K3
-│       │   ├── sales/          # R2, R3, K7
-│       │   ├── customers/      # K4–K6, R12
-│       │   ├── prescriptions/  # R4–R6
-│       │   ├── inventory/      # B1–B7, R7–R11
-│       │   ├── audit/          # U1, U2
-│       │   ├── reports/        # A4, B8, R13, U3
-│       │   └── errors/         # C8, C9
-│       ├── styles/             # app.css global servido como archivo (sin CSS-in-JS que inyecte <style>, por la CSP)
-│       └── utils/              # format.ts (quetzales, fechas locales), mask.ts
-│
-├── server/
+├── farmacentro-backend/
 │   ├── .env.example            # nombres de variables sin valores reales (§3)
-│   ├── package.json
-│   ├── tsconfig.json           # strict, noUncheckedIndexedAccess
+│   ├── .npmrc
+│   ├── eslint.config.js        # TypeScript + eslint-plugin-security
+│   ├── package.json            # npm run dev (predev prepara la base), test, lint, scripts de BD
+│   ├── tsconfig.json / tsconfig.build.json
 │   ├── vitest.config.ts
+│   ├── scripts/
+│   │   ├── .env.example        # conexiones privilegiadas (opcionales en desarrollo) y clave de respaldos
+│   │   ├── lib/env.ts          # carga de .env y rutas del repositorio
+│   │   ├── lib/seedData.ts     # datos ficticios de prueba
+│   │   ├── setup-db.ts         # colecciones, índices, TTL y registro génesis; con --seed-if-empty carga datos
+│   │   ├── seed.ts             # datos de prueba (--reset los vuelve a cargar)
+│   │   ├── init-replica-set.ts # activa el replica set rs0 del MongoDB local
+│   │   ├── generate-keys.ts    # imprime claves aleatorias para .env (no las guarda)
+│   │   ├── verify-audit-chain.ts
+│   │   ├── check-db-privileges.ts
+│   │   ├── backup.ts / restore-test.ts
+│   │   └── audit-report.ts     # npm audit de ambos proyectos + evidencia
 │   ├── src/
-│   │   ├── index.ts            # arranque: valida env, conecta a Atlas, escucha el puerto
-│   │   ├── app.ts              # construye la app Express (cadena de middlewares de arquitectura.md §4)
-│   │   ├── config/
-│   │   │   ├── env.ts          # valida process.env con Zod; si falta algo, no arranca
-│   │   │   ├── db.ts           # mongoose.set('sanitizeFilter'|'strictQuery'), autoIndex:false, TLS
-│   │   │   ├── session.ts      # express-session + connect-mongo
-│   │   │   ├── security.ts     # helmet (CSP), cors
-│   │   │   ├── webauthn.ts     # RP_ID, RP_NAME, origen esperado
-│   │   │   ├── mail.ts         # transporte de Nodemailer
-│   │   │   └── logger.ts       # pino con redacción
-│   │   ├── domain/
-│   │   │   ├── roles.ts        # roles y permisos (fuente única de roles-permisos.md)
-│   │   │   ├── auditActions.ts # catálogo de eventos
-│   │   │   └── stepUpActions.ts
-│   │   ├── middlewares/
-│   │   │   ├── requestId.ts
-│   │   │   ├── verifyOrigin.ts
-│   │   │   ├── loadUser.ts
-│   │   │   ├── requireAuth.ts
-│   │   │   ├── requireRole.ts
-│   │   │   ├── requireStepUp.ts
-│   │   │   ├── validate.ts     # Zod → req.validated
-│   │   │   ├── rateLimits.ts
-│   │   │   ├── notFound.ts
-│   │   │   └── errorHandler.ts # respuestas genéricas, sin stack
-│   │   ├── routes/             # *.routes.ts por módulo (api.md)
-│   │   ├── controllers/        # *.controller.ts por módulo
-│   │   ├── services/
-│   │   │   ├── auth.service.ts
-│   │   │   ├── password.service.ts
-│   │   │   ├── webauthn.service.ts
-│   │   │   ├── otp.service.ts
-│   │   │   ├── stepUp.service.ts
-│   │   │   ├── user.service.ts
-│   │   │   ├── product.service.ts
-│   │   │   ├── inventory.service.ts
-│   │   │   ├── sale.service.ts
-│   │   │   ├── customer.service.ts
-│   │   │   ├── prescription.service.ts
-│   │   │   ├── audit.service.ts        # encadenamiento y verificación
-│   │   │   ├── report.service.ts
-│   │   │   ├── crypto.service.ts       # AES-256-GCM, HMAC de índices ciegos
-│   │   │   ├── notification.service.ts # correos de aviso
-│   │   │   └── csv.service.ts          # CSV con protección contra inyección de fórmulas
-│   │   ├── models/             # un archivo por colección de modelo-datos.md + encryptedField.ts
-│   │   ├── validation/         # common.ts + *.schemas.ts por módulo
-│   │   ├── data/
-│   │   │   ├── common-passwords.txt    # lista de contraseñas prohibidas (D-20)
-│   │   │   └── privacy-notice.ts       # texto y versión del aviso de privacidad
-│   │   ├── types/express-session.d.ts  # tipado de req.session
-│   │   └── utils/              # canonicalJson.ts, mask.ts, money.ts, httpError.ts, escapeRegex.ts
+│   │   ├── index.ts            # arranque: conexión, verificación del replica set, servidor
+│   │   ├── app.ts              # cadena de middlewares (arquitectura.md §4)
+│   │   ├── config/             # env (validado con Zod), db, session, logger
+│   │   ├── db/                 # schema.ts (índices y privilegios del rol de la API), replicaSet.ts
+│   │   ├── domain/             # roles, acciones de bitácora, acciones de re-autenticación, NIT/DPI
+│   │   ├── middlewares/        # origen, auth, roles, validación, re-autenticación, límites, errores
+│   │   ├── routes/             # auth, users, inventory, sales (incluye clientes, recetas y facturación), audit
+│   │   ├── controllers/
+│   │   ├── services/           # negocio, cifrado, bitácora, correo, OTP, WebAuthn, facturación, reportes
+│   │   ├── models/             # un archivo por colección (modelo-datos.md)
+│   │   ├── validation/         # esquemas Zod por módulo
+│   │   ├── data/               # contraseñas prohibidas y aviso de privacidad
+│   │   ├── types/              # tipado de la sesión y del request
+│   │   └── utils/
 │   └── tests/
-│       ├── setup.ts            # MongoMemoryReplSet (transacciones), transporte de correo en memoria
-│       ├── helpers/
-│       │   ├── agent.ts        # supertest.agent con cookie y Origin
-│       │   ├── softAuthenticator.ts  # autenticador WebAuthn por software, SOLO para pruebas
-│       │   └── factories.ts
-│       ├── auth/               # login, OTP, WebAuthn, cambio de contraseña
-│       ├── modules/            # users, products, inventory, sales, customers, prescriptions, reports
-│       └── security/
-│           ├── nosql-injection.test.ts
-│           ├── rbac.test.ts
-│           ├── lockout.test.ts
-│           ├── session.test.ts          # expiración por inactividad, regeneración de id
-│           ├── step-up.test.ts          # un solo uso, ligado a acción y registro, vencimiento
-│           ├── audit-tamper.test.ts     # alteración detectada + usuario sin update/delete
-│           ├── origin.test.ts
-│           ├── headers.test.ts          # CSP, cookies, sin X-Powered-By
-│           ├── errors.test.ts           # sin stack traces
-│           ├── crypto.test.ts           # IV único, AAD, manipulación detectada
-│           ├── otp.test.ts
-│           ├── password-policy.test.ts
-│           └── prescriptions-access.test.ts
+│       ├── globalSetup.ts / setup.ts   # MongoDB en memoria (replica set) y configuración de prueba
+│       ├── helpers/            # cliente HTTP, datos de prueba y autenticador WebAuthn por software
+│       ├── auth/               # login con código y con huella
+│       ├── modules/            # inventario, ventas, clientes, recetas y facturación
+│       └── security/           # inyección NoSQL, roles, bloqueo, sesión, bitácora, web, cifrado, límites
 │
-├── scripts/
-│   ├── .env.example            # MONGODB_URI_ADMIN, MONGODB_URI_API, MONGODB_URI_AUDIT_READER
+├── Farmacentro-Frontend/
+│   ├── .npmrc
+│   ├── eslint.config.js        # prohíbe dangerouslySetInnerHTML y localStorage/sessionStorage
+│   ├── index.html
+│   ├── package.json            # npm run dev (Vite, puerto 5173)
 │   ├── tsconfig.json
-│   ├── generate-keys.ts        # imprime claves aleatorias para server/.env (no las guarda)
-│   ├── dev-memory-db.ts        # MongoDB en memoria para desarrollo sin Atlas
-│   ├── dev-mail.ts             # SMTP de desarrollo que muestra los correos en consola
-│   ├── audit-report.ts         # npm audit + evidencia
-│   ├── setup-db.ts             # crea colecciones, índices y TTL con el usuario migrator; registro génesis
-│   ├── seed.ts                 # datos ficticios y un usuario por rol
-│   ├── check-db-privileges.ts  # evidencia: el usuario de la API no puede update/delete en audit_logs
-│   ├── verify-audit-chain.ts   # verificación independiente de la cadena (usuario audit_reader)
-│   ├── backup.ts               # exportación cifrada (D-18)
-│   └── restore-test.ts         # restauración en base local y comparación de conteos
+│   ├── vite.config.ts          # proxy /api → http://localhost:3000; sin sourcemaps en build
+│   ├── public/favicon.svg
+│   └── src/
+│       ├── main.tsx / App.tsx  # rutas por rol (pantallas.md)
+│       ├── api/                # cliente HTTP (cookie de sesión) y tipos
+│       ├── auth/               # sesión en memoria, re-autenticación, aviso de inactividad, WebAuthn
+│       ├── components/         # Layout, ui, PaymentModal (cobro y facturación), QuantityInput
+│       ├── pages/              # login, account, users, pos, sales, customers, prescriptions,
+│       │                       # inventory, audit, reports, errors
+│       ├── styles/app.css      # CSS servido como archivo (compatible con la CSP)
+│       └── utils/              # formatos y validación de NIT/DPI
 │
 └── docs/
     ├── entregable2-modelo-seguridad.md
-    ├── arquitectura.md
-    ├── modelo-datos.md
-    ├── roles-permisos.md
-    ├── api.md
-    ├── pantallas.md
-    ├── matriz-controles.md
-    ├── estructura-repositorio.md
-    ├── decisiones-pendientes.md
-    ├── credenciales-prueba.md          # sprint 1 (solo datos ficticios)
-    ├── manual-instalacion.md           # sprint 4
-    ├── diccionario-datos.md            # sprint 4 (derivado de modelo-datos.md)
-    ├── limitaciones-conocidas.md       # sprint 4
-    ├── reglas-auditoria.md             # sprint 4
-    └── evidencias/                     # npm audit, resultados de pruebas, capturas de Atlas
+    ├── arquitectura.md · modelo-datos.md · roles-permisos.md · api.md · pantallas.md
+    ├── matriz-controles.md · estructura-repositorio.md · decisiones-pendientes.md
+    ├── manual-instalacion.md · credenciales-prueba.md · limitaciones-conocidas.md
+    └── evidencias/             # npm audit, privilegios de BD, pruebas de restauración
 ```
 
-## 2. Dependencias propuestas
+## 2. Dependencias
 
-Versiones consultadas en el registro de npm (`npm view`) el 24/09/2026. Todavía no se instalaron ni se pasó `npm audit`; eso será parte del sprint 1.
+Versiones fijas (consultadas en el registro de npm el 24/09/2026). `npm audit` no reporta vulnerabilidades en ninguno de los dos proyectos (`docs/evidencias/`).
 
-### 2.1 `server` — producción
+### 2.1 `farmacentro-backend` — producción
 
 | Paquete | Versión | Para qué | Requisito que atiende |
 |---|---|---|---|
-| `express` | 5.2.1 | Servidor HTTP; la v5 captura errores de funciones `async` | Stack |
+| `express` | 5.2.1 | Servidor HTTP; captura errores de funciones `async` | Stack |
 | `express-session` | 1.19.0 | Sesión en el servidor con cookie firmada | 5.17, 8.5 |
 | `connect-mongo` | 6.0.0 | Guarda las sesiones en MongoDB (`sessions`) | Sesión en servidor |
 | `mongoose` | 9.10.2 | ODM; `sanitizeFilter`, `strictQuery`, transacciones | 8.28, integridad |
@@ -193,105 +102,74 @@ Versiones consultadas en el registro de npm (`npm view`) el 24/09/2026. Todavía
 | `helmet` | 8.3.0 | Cabeceras de seguridad y Content Security Policy | Seguridad web |
 | `cors` | 2.8.6 | CORS restringido a `CLIENT_ORIGIN` | Seguridad web |
 | `express-rate-limit` | 8.7.0 | Límite de peticiones en login y envío de códigos | 8.5 |
-| `bcrypt` | 6.0.0 | Hash de contraseñas, costo 12 (alternativa `bcryptjs` 3.0.3, ver D-05) | 5.17 |
+| `bcrypt` | 6.0.0 | Hash de contraseñas, costo 12 | 5.17 |
 | `@simplewebauthn/server` | 14.0.2 | Generar y verificar desafíos WebAuthn | 8.5 |
 | `nodemailer` | 10.0.10 | Envío de códigos y avisos | 8.5, 8.16 |
-| `pino` | 10.3.1 | Log técnico estructurado con redacción de secretos | 8.15 |
-| `pino-http` | 11.0.0 | Log por petición con `requestId` | 8.15 |
-| `csv-stringify` | 6.8.3 | Generación de CSV para exportaciones | Reportes |
+| `pino` / `pino-http` | 10.3.1 / 11.0.0 | Log técnico con redacción de secretos | 8.15 |
+| `csv-stringify` | 6.8.3 | Exportaciones CSV | Reportes |
 
-Sin dependencia extra para criptografía: AES-256-GCM, HMAC, SHA-256 y números aleatorios salen de `node:crypto`.
+AES-256-GCM, HMAC, SHA-256 y los números aleatorios salen de `node:crypto`, sin dependencias extra.
 
-### 2.2 `server` — desarrollo y pruebas
+### 2.2 `farmacentro-backend` — desarrollo y pruebas
 
 | Paquete | Versión | Para qué |
 |---|---|---|
-| `typescript` | 6.0.3 | Compilador. **No** la 7.0.2: `typescript-eslint` 8.70.1 solo admite `<6.1.0` (D-04) |
+| `typescript` | 6.0.3 | Compilador (la 7 aún no es compatible con `typescript-eslint`) |
 | `tsx` | 4.23.15 | Ejecutar TypeScript en desarrollo y en `scripts/` |
-| `vitest` | 5.0.1 | Pruebas (requiere Node 22.12+ o 24) |
-| `supertest` | 7.3.0 | Pruebas HTTP de la API |
-| `mongodb-memory-server` | 11.3.0 | MongoDB en memoria como conjunto de réplicas (para probar transacciones y roles sin tocar Atlas) |
-| `@types/node` | 24.13.6 | Tipos de Node 24 |
-| `@types/express` | 5.0.6 | Tipos |
-| `@types/express-session` | 1.19.0 | Tipos |
-| `@types/cors` | 2.8.19 | Tipos |
-| `@types/bcrypt` | 6.0.0 | Tipos |
-| `@types/nodemailer` | 8.0.2 | Tipos |
-| `@types/supertest` | 7.2.1 | Tipos |
+| `vitest` / `supertest` | 5.0.1 / 7.3.0 | Pruebas de la API |
+| `mongodb-memory-server` | 11.3.0 | MongoDB en memoria (replica set) para las pruebas |
+| `eslint`, `@eslint/js`, `typescript-eslint`, `eslint-plugin-security`, `globals` | 10.11.0, 10.0.1, 8.70.1, 4.0.1, 17.12.0 | Calidad y patrones inseguros |
+| `@types/*` | — | Tipos de Node 22, Express, sesión, CORS, bcrypt, Nodemailer y Supertest |
 
-### 2.3 `client`
+### 2.3 `Farmacentro-Frontend`
 
 | Paquete | Versión | Tipo | Para qué |
 |---|---|---|---|
-| `react` | 19.3.0 | prod | Interfaz |
-| `react-dom` | 19.3.0 | prod | Renderizado |
-| `react-router` | 7.18.4 | prod | Navegación por rol (modo declarativo, sin SSR). La 8 exige Node 22.22+ (D-04) |
-| `@simplewebauthn/browser` | 14.0.0 | prod | Llamar a WebAuthn desde el navegador (misma versión mayor que el servidor) |
-| `vite` | 8.3.1 | dev | Servidor de desarrollo con proxy y compilación |
-| `@vitejs/plugin-react` | 6.1.1 | dev | Soporte de React en Vite |
+| `react` / `react-dom` | 19.3.0 | prod | Interfaz |
+| `react-router` | 7.18.4 | prod | Navegación por rol |
+| `@simplewebauthn/browser` | 14.0.0 | prod | WebAuthn desde el navegador |
+| `vite` / `@vitejs/plugin-react` | 8.3.1 / 6.1.1 | dev | Servidor de desarrollo con proxy y compilación |
 | `typescript` | 6.0.3 | dev | Compilador |
-| `@types/react` / `@types/react-dom` | 19.3.0 | dev | Tipos |
+| `eslint` y plugins (incluye `eslint-plugin-react-hooks` 7.1.1) | — | dev | Calidad y reglas de seguridad del cliente |
 
-Se evitan a propósito librerías de componentes, de estado global y de peticiones (p. ej. React Query): menos dependencias = menos superficie para `npm audit` y para el grupo auditor.
-
-### 2.4 Raíz — calidad de código
-
-| Paquete | Versión | Para qué |
-|---|---|---|
-| `eslint` | 10.11.0 | Linter |
-| `@eslint/js` | 10.0.1 | Reglas base |
-| `typescript-eslint` | 8.70.1 | Reglas para TypeScript |
-| `eslint-plugin-security` | 4.0.1 | Detecta patrones inseguros (eval, regex peligrosas, rutas dinámicas) |
-| `eslint-plugin-react-hooks` | 7.1.1 | Reglas de hooks (compatibilidad con ESLint 10 por confirmar al instalar) |
-| `globals` | 17.12.0 | Globales de navegador y Node para ESLint |
-| `prettier` | 3.9.9 | Formato |
-
-### 2.5 Herramientas externas (no son dependencias de npm)
-
-| Herramienta | Para qué |
-|---|---|
-| MongoDB Atlas (M0) | Base de datos |
-| Servidor SMTP de desarrollo | Recibir los correos de prueba (D-06) |
-| Chrome o Edge con Windows Hello | WebAuthn en `localhost` |
-| MongoDB Database Tools (`mongodump`/`mongorestore`) | Solo si se elige esa vía para el respaldo simulado (D-18) |
+Se evitan librerías de componentes, de estado global y de peticiones: menos dependencias, menos superficie para `npm audit` y para el grupo auditor.
 
 ## 3. Variables de entorno
 
-`server/.env.example` (solo nombres y descripción; los valores reales nunca se versionan):
+`farmacentro-backend/.env.example` (solo nombres y descripción; los valores reales nunca se versionan):
 
 | Variable | Descripción |
 |---|---|
 | `NODE_ENV` | `development` · `test` · `production` |
 | `PORT` | Puerto de la API (3000) |
-| `CLIENT_ORIGIN` | Origen exacto del cliente (`http://localhost:5173` en desarrollo) — CORS, verificación de origen y WebAuthn |
+| `CLIENT_ORIGIN` | Origen exacto del cliente (`http://localhost:5173` en desarrollo) |
 | `TRUST_PROXY` | Número de saltos de proxy (0 en local) |
-| `MONGODB_URI` | Cadena de conexión del usuario `farmacentro_api` |
-| `SESSION_SECRET` | ≥ 32 bytes aleatorios |
-| `DATA_ENC_ACTIVE_VERSION` | Versión de clave con la que se cifra (1) |
-| `DATA_ENC_KEY_V1` | 32 bytes en base64 (AES-256-GCM) |
-| `BLIND_INDEX_KEY` | 32 bytes en base64 (HMAC de índices ciegos) |
-| `OTP_HMAC_KEY` | 32 bytes en base64 (HMAC de códigos) |
-| `RP_ID` / `RP_NAME` | Dominio de WebAuthn (`localhost`) y nombre visible ("FarmaCentro") |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM` | Servidor de correo |
-| `STEP_UP_ALLOW_EMAIL` | `true`/`false`: si el código por correo sirve para re-autenticación (D-03) |
+| `MONGODB_URI` | `mongodb://localhost:27017/farmacentro` en local; usuario `farmacentro_api` en Atlas |
+| `SESSION_SECRET`, `SESSION_IDLE_MINUTES`, `SESSION_ABSOLUTE_HOURS` | Sesión (inactividad máxima de 15 min, absoluta de 8 h) |
+| `DATA_ENC_ACTIVE_VERSION`, `DATA_ENC_KEY_V1` | Clave AES-256-GCM (32 bytes en base64) y su versión |
+| `BLIND_INDEX_KEY`, `OTP_HMAC_KEY` | Claves HMAC para índices ciegos y códigos |
+| `BCRYPT_COST` | 12 como mínimo |
+| `RP_ID`, `RP_NAME` | Dominio y nombre para WebAuthn |
+| `MAIL_TRANSPORT`, `SMTP_*`, `MAIL_FROM` | `console` en desarrollo (los códigos se ven en la terminal); `smtp` fuera de desarrollo |
+| `STEP_UP_ALLOW_EMAIL` | Si el código por correo sirve para re-autenticación (D-03) |
+| `SERVE_CLIENT`, `CLIENT_DIST` | Servir el frontend compilado desde la API (un solo origen) |
 | `LOG_LEVEL` | `info` por defecto |
 
-`scripts/.env.example`: `MONGODB_URI_ADMIN` (usuario `farmacentro_migrator`), `MONGODB_URI_API` (para `check-db-privileges.ts`), `MONGODB_URI_AUDIT_READER`. Los scripts leen además las claves de cifrado de `server/.env` para sembrar recetas cifradas.
+`farmacentro-backend/scripts/.env.example`: `MONGODB_URI_ADMIN`, `MONGODB_URI_API`, `MONGODB_URI_AUDIT_READER` (opcionales en desarrollo, obligatorias con Atlas), `BACKUP_ENC_KEY` y `SEED_PASSWORD`.
 
-## 4. Scripts npm previstos (raíz)
+## 4. Comandos
 
-| Script | Qué hace |
-|---|---|
-| `npm run dev` | API (`tsx watch`) y cliente (Vite) en dos procesos |
-| `npm run build` | Compila cliente y servidor |
-| `npm test` | Pruebas de la API (Vitest + Supertest + memoria) |
-| `npm run lint` | ESLint en todo el repositorio |
-| `npm run audit:check` | `npm audit --audit-level=high`; falla si hay altas o críticas y guarda el resultado en `docs/evidencias/` |
-| `npm run setup-db` | `scripts/setup-db.ts` |
-| `npm run seed` | `scripts/seed.ts` |
-| `npm run verify-audit` | `scripts/verify-audit-chain.ts` |
-| `npm run check-db-privileges` | `scripts/check-db-privileges.ts` |
+| Proyecto | Comando | Qué hace |
+|---|---|---|
+| Backend | `npm run dev` | Prepara la base (índices y, si está vacía, datos de prueba) y levanta la API con recarga automática |
+| Backend | `npm test` · `npm run lint` · `npm run typecheck` | Pruebas y calidad |
+| Backend | `npm run seed -- --reset` | Vuelve a cargar los datos de prueba |
+| Backend | `npm run init-replica-set` | Activa el replica set del MongoDB local |
+| Backend | `npm run audit:check` · `npm run verify-audit` · `npm run check-db-privileges` | Evidencias para la auditoría |
+| Backend | `npm run backup` · `npm run restore-test` | Respaldo cifrado y prueba de restauración |
+| Frontend | `npm run dev` | Vite en http://localhost:5173 |
+| Frontend | `npm run build` · `npm run lint` · `npm run typecheck` | Compilación y calidad |
 
 ## 5. Ramas
 
-`main` (estable) ← `develop` ← ramas por módulo: `feat/auth`, `feat/users-roles`, `feat/audit-log`, `feat/inventory`, `feat/sales`, `feat/customers`, `feat/prescriptions`, `feat/reports`, `chore/security-tests`. Commits pequeños en inglés (p. ej. `feat(audit): add hash chain verification`). Fusión a `develop` con revisión de otro integrante.
+`main` (estable) ← `develop` ← ramas por módulo (`feat/auth`, `feat/inventory`, `feat/sales`, `feat/audit-reports`, `feat/scripts`, `feat/client`, `feat/billing`, `chore/security-tests`, `refactor/split-projects`). Commits pequeños en inglés. Repositorio: https://github.com/ecaldcc/08-FarmaCentro

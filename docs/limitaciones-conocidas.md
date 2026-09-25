@@ -8,7 +8,7 @@
 |---|---|---|
 | Pagos con tarjeta | Genera una referencia ficticia `SIM-XXXXXXXXXX`. No existe ningún campo de tarjeta y la API rechaza cualquier dato extra. | Terminal P2PE del procesador; FarmaCentro nunca ve la tarjeta. |
 | Respaldo (8.13) | `npm run backup` exporta y cifra con AES-256-GCM; `npm run restore-test` restaura en una base temporal y verifica conteos y la cadena de la bitácora. | Respaldo diario fuera de sitio con prueba mensual. |
-| Correo | En desarrollo, Mailpit o `npm run dev:mail` capturan los correos sin entregarlos. | SMTP real con SPF/DKIM. |
+| Correo | En desarrollo (`MAIL_TRANSPORT=console`) los correos se muestran en la terminal del backend y no se envían. | SMTP real con SPF/DKIM. |
 | Factura | El comprobante no tiene validez fiscal. | Factura electrónica FEL de la SAT (fuera de alcance). |
 
 ## Solo documentado (fuera de alcance)
@@ -25,4 +25,4 @@ Tienda en línea, modo de contingencia del POS, enlace 4G de respaldo, segmentac
 6. **Reescritura completa de la bitácora:** un administrador de Atlas podría reescribir toda la cadena. Se mitiga con el ancla (último `seq` y `hash`) que se entrega al grupo auditor fuera del sistema (D-10).
 7. **Una sola sucursal (D-15):** no se modelan varias sucursales.
 8. **Lista de contraseñas prohibidas reducida (D-20):** se incluye una lista corta de contraseñas comunes de 12 caracteres o más.
-9. **Base de desarrollo en memoria:** `npm run dev:db` no tiene autenticación, por lo que no demuestra el rol personalizado. Esa evidencia se genera contra Atlas con `npm run check-db-privileges`.
+9. **MongoDB local sin usuarios:** en desarrollo la base local no tiene autenticación, por lo que no demuestra el rol personalizado de la API. Esa evidencia se genera contra Atlas con `npm run check-db-privileges`.

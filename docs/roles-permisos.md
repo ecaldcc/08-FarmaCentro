@@ -26,7 +26,7 @@
 
 ## 3. Matriz de rol por acción
 
-Leyenda: ✅ permitido · 🔸 permitido con restricción (ver nota) · — denegado (403 y evento `authz.denied`).
+Leyenda: **Sí** = permitido · **Parcial** = permitido con restricción (ver nota) · — = denegado (403 y evento `authz.denied`).
 **2FA** = exige re-autenticación (huella o, si se aprueba D-03, código por correo) inmediatamente antes de la operación.
 **Bitácora** = evento que se registra (catálogo en §4). "—" = no se registra (lecturas no sensibles).
 
@@ -34,25 +34,25 @@ Leyenda: ✅ permitido · 🔸 permitido con restricción (ver nota) · — dene
 
 | Acción | Admin | Regente | Cajero | Bodeguero | Auditor | 2FA | Bitácora |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| Iniciar sesión (contraseña + 2.º factor) | ✅ | ✅ | ✅ | ✅ | ✅ | Login | `auth.password.success` / `auth.login.failure` / `auth.login.success` / `auth.account.locked` / `auth.mfa.*` |
-| Cerrar sesión | ✅ | ✅ | ✅ | ✅ | ✅ | No | `auth.logout` |
-| Ver mi perfil y expiración de sesión | ✅ | ✅ | ✅ | ✅ | ✅ | No | — |
-| Cambiar mi contraseña | ✅ | ✅ | ✅ | ✅ | ✅ | No (pide la actual) | `auth.password.changed` |
-| Registrar una huella en mi cuenta | ✅ | ✅ | ✅ | ✅ | ✅ | **Sí** | `webauthn.credential.registered` |
-| Revocar una de mis huellas | ✅ | ✅ | ✅ | ✅ | ✅ | **Sí** | `webauthn.credential.revoked` |
+| Iniciar sesión (contraseña + 2.º factor) | Sí | Sí | Sí | Sí | Sí | Login | `auth.password.success` / `auth.login.failure` / `auth.login.success` / `auth.account.locked` / `auth.mfa.*` |
+| Cerrar sesión | Sí | Sí | Sí | Sí | Sí | No | `auth.logout` |
+| Ver mi perfil y expiración de sesión | Sí | Sí | Sí | Sí | Sí | No | — |
+| Cambiar mi contraseña | Sí | Sí | Sí | Sí | Sí | No (pide la actual) | `auth.password.changed` |
+| Registrar una huella en mi cuenta | Sí | Sí | Sí | Sí | Sí | **Sí** | `webauthn.credential.registered` |
+| Revocar una de mis huellas | Sí | Sí | Sí | Sí | Sí | **Sí** | `webauthn.credential.revoked` |
 
 ### 3.2 Usuarios y roles
 
 | Acción | Admin | Regente | Cajero | Bodeguero | Auditor | 2FA | Bitácora |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| Listar / ver usuarios | ✅ | — | — | — | 🔸¹ | No | — |
-| Crear usuario (asigna rol) | ✅ | — | — | — | — | **Sí** | `user.created` |
-| Editar nombre o correo | ✅ | — | — | — | — | **Sí**² | `user.updated` |
-| **Cambiar rol** | 🔸³ | — | — | — | — | **Sí** | `user.role.changed` |
-| Deshabilitar / habilitar | 🔸³ | — | — | — | — | **Sí** | `user.disabled` / `user.enabled` |
-| Desbloquear cuenta | ✅ | — | — | — | — | **Sí** | `auth.account.unlocked` |
-| Restablecer contraseña (temporal) | ✅ | — | — | — | — | **Sí** | `auth.password.reset` |
-| Revocar huella de otro usuario (dispositivo perdido) | ✅ | — | — | — | — | **Sí** | `webauthn.credential.revoked` |
+| Listar / ver usuarios | Sí | — | — | — | Parcial¹ | No | — |
+| Crear usuario (asigna rol) | Sí | — | — | — | — | **Sí** | `user.created` |
+| Editar nombre o correo | Sí | — | — | — | — | **Sí**² | `user.updated` |
+| **Cambiar rol** | Parcial³ | — | — | — | — | **Sí** | `user.role.changed` |
+| Deshabilitar / habilitar | Parcial³ | — | — | — | — | **Sí** | `user.disabled` / `user.enabled` |
+| Desbloquear cuenta | Sí | — | — | — | — | **Sí** | `auth.account.unlocked` |
+| Restablecer contraseña (temporal) | Sí | — | — | — | — | **Sí** | `auth.password.reset` |
+| Revocar huella de otro usuario (dispositivo perdido) | Sí | — | — | — | — | **Sí** | `webauthn.credential.revoked` |
 
 ¹ El Auditor ve usuarios solo a través del reporte "Usuarios y roles" (sin correo completo).
 ² El correo es el destino del código de segundo factor; cambiarlo sin re-autenticación permitiría secuestrar la cuenta.
@@ -62,15 +62,15 @@ Leyenda: ✅ permitido · 🔸 permitido con restricción (ver nota) · — dene
 
 | Acción | Admin | Regente | Cajero | Bodeguero | Auditor | 2FA | Bitácora |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| Consultar productos y existencias | — | ✅ | ✅ | ✅ | — | No | — |
-| Crear producto | — | — | — | 🔸⁴ | — | No | `product.created` |
-| Editar producto (nombre, precio, mínimo, estado) | — | — | — | ✅ | — | No | `product.updated` (precio anterior y nuevo) |
-| **Marcar / desmarcar como controlado** | — | ✅ | — | — | — | **Sí** | `product.controlled.changed` |
-| Registrar entrada de mercadería (lote) | — | ✅ | — | ✅ | — | No | `inventory.receipt` |
-| Ver lotes y vencimientos | — | ✅ | — | ✅ | — | No | — |
-| Ver kardex (movimientos) | — | ✅ | — | ✅ | 🔸⁵ | No | — |
-| **Ajustar inventario — no controlado** | — | ✅ | — | ✅ | — | **Sí** + motivo | `inventory.adjustment` |
-| **Ajustar inventario — controlado** | — | ✅ | — | — | — | **Sí** + motivo | `inventory.adjustment` (`isControlled: true`) |
+| Consultar productos y existencias | — | Sí | Sí | Sí | — | No | — |
+| Crear producto | — | — | — | Parcial⁴ | — | No | `product.created` |
+| Editar producto (nombre, precio, mínimo, estado) | — | — | — | Sí | — | No | `product.updated` (precio anterior y nuevo) |
+| **Marcar / desmarcar como controlado** | — | Sí | — | — | — | **Sí** | `product.controlled.changed` |
+| Registrar entrada de mercadería (lote) | — | Sí | — | Sí | — | No | `inventory.receipt` |
+| Ver lotes y vencimientos | — | Sí | — | Sí | — | No | — |
+| Ver kardex (movimientos) | — | Sí | — | Sí | Parcial⁵ | No | — |
+| **Ajustar inventario — no controlado** | — | Sí | — | Sí | — | **Sí** + motivo | `inventory.adjustment` |
+| **Ajustar inventario — controlado** | — | Sí | — | — | — | **Sí** + motivo | `inventory.adjustment` (`isControlled: true`) |
 
 ⁴ Un producto nuevo siempre nace como **no controlado** si lo crea el Bodeguero; si debe ser controlado, el Regente lo marca después (con 2FA). Así el Bodeguero no puede crear ni desmarcar controlados.
 ⁵ El Auditor ve los ajustes a través del reporte "Ajustes de inventario".
@@ -79,45 +79,45 @@ Leyenda: ✅ permitido · 🔸 permitido con restricción (ver nota) · — dene
 
 | Acción | Admin | Regente | Cajero | Bodeguero | Auditor | 2FA | Bitácora |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| Registrar venta (no controlados) | — | ✅ | ✅ | — | — | No | `sale.created` (ver D-26) |
+| Registrar venta (no controlados) | — | Sí | Sí | — | — | No | `sale.created` (ver D-26) |
 | Incluir un producto controlado en una venta de mostrador | — | — | — | — | — | — | `authz.denied` |
-| Ver mis ventas del día | — | ✅ | ✅ | — | — | No | — |
-| Ver todas las ventas | — | ✅ | — | — | — | No | — |
-| **Anular venta** | — | ✅ | — | — | — | **Sí** + motivo | `sale.voided` |
+| Ver mis ventas del día | — | Sí | Sí | — | — | No | — |
+| Ver todas las ventas | — | Sí | — | — | — | No | — |
+| **Anular venta** | — | Sí | — | — | — | **Sí** + motivo | `sale.voided` |
 
 ### 3.5 Clientes y fidelización
 
 | Acción | Admin | Regente | Cajero | Bodeguero | Auditor | 2FA | Bitácora |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| Buscar cliente por teléfono o correo (resultado enmascarado) | — | ✅ | ✅ | — | — | No | — |
-| Registrar cliente (**consentimiento obligatorio**) | — | ✅ | ✅ | — | — | No | `customer.created` (versión del aviso aceptado) |
-| Ver detalle del cliente (contacto descifrado, puntos) | — | ✅ | ✅ | — | — | No | `customer.viewed` |
-| Corregir datos (rectificación) | — | ✅ | ✅ | — | — | No | `customer.updated` |
-| Registrar retiro del consentimiento (anonimiza) | — | ✅ | — | — | — | No | `customer.consent.withdrawn` |
+| Buscar cliente por teléfono o correo (resultado enmascarado) | — | Sí | Sí | — | — | No | — |
+| Registrar cliente (**consentimiento obligatorio**) | — | Sí | Sí | — | — | No | `customer.created` (versión del aviso aceptado) |
+| Ver detalle del cliente (contacto descifrado, puntos) | — | Sí | Sí | — | — | No | `customer.viewed` |
+| Corregir datos (rectificación) | — | Sí | Sí | — | — | No | `customer.updated` |
+| Registrar retiro del consentimiento (anonimiza) | — | Sí | — | — | — | No | `customer.consent.withdrawn` |
 
 ### 3.6 Recetas y despacho
 
 | Acción | Admin | Regente | Cajero | Bodeguero | Auditor | 2FA | Bitácora |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| Listar recetas (folio, fecha, estado; sin datos clínicos) | — | ✅ | — | — | — | No | — |
-| **Ver receta** (descifrada) | — | ✅ | — | — | — | No | `prescription.viewed` |
-| Registrar receta | — | ✅ | — | — | — | No | `prescription.created` |
-| Anular receta | — | ✅ | — | — | — | No (motivo) | `prescription.cancelled` |
-| Despachar receta sin controlados | — | ✅ | — | — | — | No | `prescription.dispensed` |
-| **Despachar controlados** | — | ✅ | — | — | — | **Sí** | `prescription.dispensed` (`hasControlled: true`) |
+| Listar recetas (folio, fecha, estado; sin datos clínicos) | — | Sí | — | — | — | No | — |
+| **Ver receta** (descifrada) | — | Sí | — | — | — | No | `prescription.viewed` |
+| Registrar receta | — | Sí | — | — | — | No | `prescription.created` |
+| Anular receta | — | Sí | — | — | — | No (motivo) | `prescription.cancelled` |
+| Despachar receta sin controlados | — | Sí | — | — | — | No | `prescription.dispensed` |
+| **Despachar controlados** | — | Sí | — | — | — | **Sí** | `prescription.dispensed` (`hasControlled: true`) |
 
 ### 3.7 Bitácora y reportes
 
 | Acción | Admin | Regente | Cajero | Bodeguero | Auditor | 2FA | Bitácora |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| Consultar bitácora con filtros | — (D-13) | — | — | — | ✅ | No | `audit.viewed` |
-| Verificar integridad de la cadena | — | — | — | — | ✅ | No | `audit.verified` (resultado y último `seq`) |
-| Reporte de intentos fallidos | — | — | — | — | ✅ | No | `report.viewed` |
-| Reporte de usuarios y roles | ✅ | — | — | — | ✅ | No | `report.viewed` |
-| Reporte de anulaciones | — | ✅ | — | — | ✅ | No | `report.viewed` |
-| Reporte de ajustes de inventario | — | ✅ | — | ✅ | ✅ | No | `report.viewed` |
-| Reporte de despachos de controlados (seudonimizado) | — | ✅ | — | — | 🔸 D-17 | No | `report.viewed` |
-| **Exportar a CSV** (bitácora o reporte) | — | — | — | — | ✅ | No | `audit.exported` / `report.exported` (filtros y n.º de filas) |
+| Consultar bitácora con filtros | — (D-13) | — | — | — | Sí | No | `audit.viewed` |
+| Verificar integridad de la cadena | — | — | — | — | Sí | No | `audit.verified` (resultado y último `seq`) |
+| Reporte de intentos fallidos | — | — | — | — | Sí | No | `report.viewed` |
+| Reporte de usuarios y roles | Sí | — | — | — | Sí | No | `report.viewed` |
+| Reporte de anulaciones | — | Sí | — | — | Sí | No | `report.viewed` |
+| Reporte de ajustes de inventario | — | Sí | — | Sí | Sí | No | `report.viewed` |
+| Reporte de despachos de controlados (seudonimizado) | — | Sí | — | — | Parcial D-17 | No | `report.viewed` |
+| **Exportar a CSV** (bitácora o reporte) | — | — | — | — | Sí | No | `audit.exported` / `report.exported` (filtros y n.º de filas) |
 | Modificar o borrar la bitácora | — | — | — | — | — | — | Imposible: no hay endpoint y la BD lo impide |
 
 ## 4. Catálogo de eventos de bitácora
@@ -160,7 +160,7 @@ El reporte "Usuarios y roles" (con exportación CSV) sirve de insumo para la rev
 
 | Acción | Admin | Regente | Cajero | Bodeguero | Auditor | 2FA | Bitácora |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
-| Consultar comprador por NIT/DPI | — | ✅ | ✅ | — | — | No | `billing_party.viewed` |
-| Registrar comprador nuevo al cobrar | — | ✅ | ✅ | — | — | No | `billing_party.created` |
+| Consultar comprador por NIT/DPI | — | Sí | Sí | — | — | No | `billing_party.viewed` |
+| Registrar comprador nuevo al cobrar | — | Sí | Sí | — | — | No | `billing_party.created` |
 
 `sale.created` incluye ahora `billingType` en sus detalles.

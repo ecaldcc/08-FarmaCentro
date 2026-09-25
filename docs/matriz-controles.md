@@ -1,6 +1,6 @@
 # Matriz de controles (versión inicial)
 
-> Versión 0.2 (25/09/2026): actualizada tras implementar el código de los sprints 1 a 3 y las pruebas de seguridad (132 pruebas en verde). Versión 0.1 (24/09/2026): fase de diseño. Los controles son los de la **Tabla 12** del entregable 2 (`entregable2-modelo-seguridad.md`), con numeración de ISO/IEC 27002:2022.
+> Versión 0.2 (25/09/2026): actualizada tras implementar el código de los sprints 1 a 3 y las pruebas de seguridad (140 pruebas en verde). Versión 0.1 (24/09/2026): fase de diseño. Los controles son los de la **Tabla 12** del entregable 2 (`entregable2-modelo-seguridad.md`), con numeración de ISO/IEC 27002:2022.
 > Las rutas de evidencia ya existen en el repositorio, salvo las capturas de Atlas y los documentos marcados como "propuesto", que quedan pendientes.
 
 ## Estados

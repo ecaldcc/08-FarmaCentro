@@ -4,11 +4,25 @@ Prototipo académico del curso **Seguridad y Auditoría de Sistemas** (Universid
 
 **Equipo:** Edwar Daniel Calderón Cinco · José Eduardo Salguero Aquino · Henry David Cabrera Virula
 
-> ⚠️ Sistema académico: usa **solo datos ficticios**. Los pagos son simulados y nunca se pide ni se guarda un dato de tarjeta.
+---
 
-## ¿Qué es?
+## Despliegue
 
-FarmaCentro es una cadena ficticia de farmacias pyme en Guatemala. Esta aplicación web es su sistema de gestión de sucursal: ventas de mostrador, inventario con medicamentos controlados, clientes de fidelización, recetas y bitácora de auditoría.
+| | |
+|---|---|
+| **Aplicación en línea** | **Pendiente de despliegue** — pegar aquí el enlace de producción |
+| **Repositorio** | [github.com/ecaldcc/08-FarmaCentro](https://github.com/ecaldcc/08-FarmaCentro) |
+| **Estado** | En desarrollo · pendiente de entrega al grupo auditor |
+
+> **Requisitos del despliegue:** HTTPS y **un solo dominio para el cliente y la API** (la cookie `SameSite=Strict` y la huella con WebAuthn lo exigen). Se compila el frontend (`npm run build` en `Farmacentro-Frontend`) y el backend lo sirve con `SERVE_CLIENT=true`, `NODE_ENV=production`, `CLIENT_ORIGIN` y `RP_ID` con el dominio público, y un SMTP real. Guía completa en [docs/manual-instalacion.md](docs/manual-instalacion.md#5-despliegue-un-solo-origen-con-https).
+
+---
+
+> **Sistema académico:** usa **solo datos ficticios**. Los pagos son simulados y nunca se pide ni se guarda un dato de tarjeta.
+
+## Qué es
+
+FarmaCentro es una cadena ficticia de farmacias pyme en Guatemala. Esta aplicación web es su sistema de gestión de sucursal: ventas de mostrador con facturación a CF, NIT o DPI, inventario con medicamentos controlados, clientes de fidelización, recetas y bitácora de auditoría.
 
 Se diseñó a partir del modelo de seguridad basado en **ISO/IEC 27001:2022** (ver [docs/entregable2-modelo-seguridad.md](docs/entregable2-modelo-seguridad.md)), con dos objetivos: que sea **seguro** y que sea **fácil de auditar**. Cada control deja evidencia verificable: un registro en la bitácora, una configuración, una prueba automática o un documento. Otro grupo del curso lo auditará como auditor independiente.
 
@@ -19,7 +33,7 @@ Se diseñó a partir del modelo de seguridad basado en **ISO/IEC 27001:2022** (v
 | Autenticación | Usuario y contraseña + **segundo factor**: huella (WebAuthn / Windows Hello) o código de 6 dígitos por correo | bcrypt (costo 12), bloqueo de 15 min tras 5 intentos, sesión en servidor que expira a los 15 min de inactividad |
 | Usuarios y roles | Administrador, Regente, Cajero, Bodeguero y Auditor | Control por roles en el backend, mínimo privilegio, segregación de funciones |
 | Inventario | Productos, lotes, vencimientos (FEFO), marca de medicamento controlado | Ajustes con motivo y **re-autenticación**; kardex de solo inserción |
-| Ventas de mostrador | Cobro en efectivo o tarjeta **simulada** | Anulación solo por el Regente con re-autenticación y motivo; transacciones MongoDB |
+| Ventas de mostrador | Cobro en efectivo o tarjeta **simulada**; comprobante a CF, NIT o DPI (obligatorio desde Q2,500.00) | Anulación solo por el Regente con re-autenticación y motivo; NIT y DPI cifrados; transacciones MongoDB |
 | Clientes y fidelización | Registro con datos mínimos y puntos | **Consentimiento de privacidad obligatorio**; teléfono y correo cifrados |
 | Recetas | Registro y despacho, incluidos medicamentos controlados | Visibles solo para el Regente; campos cifrados con **AES-256-GCM**; cada consulta queda en la bitácora |
 | Bitácora de auditoría | Registro de quién hizo qué, cuándo y desde dónde | Colección de solo inserción **encadenada por hash SHA-256** y verificable |
@@ -33,16 +47,7 @@ La re-autenticación (step-up) sirve para **una sola operación**, queda ligada 
 - **API:** Node.js 22 + Express 5 + TypeScript, en capas `routes → controllers → services → models`
 - **Base de datos:** MongoDB local (replica set) en desarrollo y MongoDB Atlas (M0) para la entrega, con Mongoose 9, transacciones y un usuario de base de datos con rol personalizado de mínimo privilegio
 - **Seguridad:** helmet (CSP), CORS restringido, verificación de origen, Zod, `sanitizeFilter`, `express-rate-limit`, `express-session` + `connect-mongo`
-- **Pruebas:** Vitest + Supertest + MongoDB en memoria (132 pruebas, incluidas las de seguridad)
-
-## Despliegue
-
-| Ambiente | Enlace | Estado |
-|---|---|---|
-| Producción (entrega al grupo auditor) | _pendiente: pegar aquí el enlace cuando se despliegue_ | ⏳ Sin desplegar |
-| Repositorio | https://github.com/ecaldcc/08-FarmaCentro | ✅ Público |
-
-Requisitos del despliegue: HTTPS y el **mismo dominio para el cliente y la API**. La cookie `SameSite=Strict` y WebAuthn lo exigen. Se compila el frontend (`npm run build` en `Farmacentro-Frontend`) y el backend lo sirve con `SERVE_CLIENT=true`, `NODE_ENV=production`, `CLIENT_ORIGIN` y `RP_ID` con el dominio público. Detalles en [docs/manual-instalacion.md](docs/manual-instalacion.md).
+- **Pruebas:** Vitest + Supertest + MongoDB en memoria (140 pruebas, incluidas las de seguridad)
 
 ## Estructura
 
@@ -102,9 +107,11 @@ Abre **http://localhost:5173** en Chrome o Edge. Las credenciales de prueba est�
 | [api.md](docs/api.md) | Endpoints, validación y eventos de bitácora |
 | [pantallas.md](docs/pantallas.md) | Pantallas por rol y navegación |
 | [matriz-controles.md](docs/matriz-controles.md) | Controles ISO/IEC 27002 → estado → evidencia |
+| [estructura-repositorio.md](docs/estructura-repositorio.md) | Carpetas, dependencias, variables de entorno y comandos |
 | [limitaciones-conocidas.md](docs/limitaciones-conocidas.md) | Qué es simulado o solo documentado |
 | [manual-instalacion.md](docs/manual-instalacion.md) | Instalación local, Atlas y despliegue |
-| [decisiones-pendientes.md](docs/decisiones-pendientes.md) | Supuestos y preguntas abiertas |
+| [credenciales-prueba.md](docs/credenciales-prueba.md) | Usuarios de prueba (solo desarrollo local) |
+| [decisiones-pendientes.md](docs/decisiones-pendientes.md) | Supuestos, decisiones tomadas y preguntas abiertas |
 
 ## Fuera de alcance (solo documentado)
 

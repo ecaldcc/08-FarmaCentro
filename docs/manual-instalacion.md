@@ -83,8 +83,8 @@ Abre http://localhost:5173. Vite reenvía `/api` al backend, así que el navegad
 
 | Usuario | Rol | Dónde se usa |
 |---|---|---|
-| `farmacentro_migrator` | `readWrite` + `dbAdmin` sobre `farmacentro` | `scripts/.env` → `MONGODB_URI_ADMIN` |
-| `farmacentro_api` | `farmacentroApi` | `.env` → `MONGODB_URI` y `scripts/.env` → `MONGODB_URI_API` |
+| `farmacentro_migrator` | `readWrite` + `dbAdmin` sobre `farmacentro` | `farmacentro-backend/scripts/.env` → `MONGODB_URI_ADMIN` |
+| `farmacentro_api` | `farmacentroApi` | `farmacentro-backend/.env` → `MONGODB_URI` y `scripts/.env` → `MONGODB_URI_API` |
 | `farmacentro_audit_reader` | `auditReader` | `scripts/.env` → `MONGODB_URI_AUDIT_READER` (grupo auditor) |
 
 4. Ejecuta `npm run setup-db` y `npm run seed`. Genera la evidencia de privilegios con `npm run check-db-privileges`; se guarda en `docs/evidencias/`.
