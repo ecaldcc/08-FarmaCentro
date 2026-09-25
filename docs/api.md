@@ -407,3 +407,30 @@ query = Page.extend({ from: IsoDate.optional(), to: IsoDate.optional(),
 | 57 | Anulaciones | n.º de venta, fecha de venta, total, cajero, anulada por, fecha de anulación, motivo, método de 2FA |
 | 58 | Ajustes de inventario | fecha, producto, lote, controlado, cantidad, código y motivo, usuario, método de 2FA |
 | 59 | Despachos de controlados | fecha, folio, producto, lote, cantidad, regente, método de 2FA (**sin** datos del paciente ni del médico) |
+
+## 4. Facturación (agregado el 25/09/2026)
+
+**`POST /sales`** y **`POST /prescriptions/:id/dispense`** aceptan además:
+
+```ts
+billing = z.discriminatedUnion('type', [
+  z.strictObject({ type: z.literal('CF') }),
+  z.strictObject({ type: z.literal('NIT'), taxId: NIT /* dígito verificador */, name: z.string().min(3).max(150).optional() }),
+  z.strictObject({ type: z.literal('CUI'), taxId: CUI /* 13 dígitos */, name: z.string().min(3).max(150).optional() }),
+]).default({ type: 'CF' })
+```
+
+- Total ≥ Q2,500.00 con `CF` → 400 (`body.billing.type`), sin tocar existencias.
+- NIT/DPI no registrado y sin `name` → 400 (`body.billing.name`). Con `name`, se registra cifrado (evento `billing_party.created`) dentro de la transacción de la venta.
+- La respuesta incluye `billing: { type, name, taxIdDisplay }` y `customerName` (cliente de fidelización, si hay).
+
+**60. `GET /billing-parties/lookup`** · roles regente, cajero
+
+```ts
+query = z.discriminatedUnion('type', [
+  z.strictObject({ type: z.literal('NIT'), taxId: NIT }),
+  z.strictObject({ type: z.literal('CUI'), taxId: CUI }),
+])
+```
+
+- 200 `{ type, name, taxIdDisplay }` o 404 si no está registrado. Cada consulta genera `billing_party.viewed`, porque revela el nombre asociado a un número de identificación.

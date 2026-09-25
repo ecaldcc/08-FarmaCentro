@@ -16,7 +16,7 @@ import {
   DispenseBody,
   ListPrescriptionsQuery,
 } from '../validation/prescription.schemas.js';
-import { CreateSaleBody, ListSalesQuery, VoidSaleBody } from '../validation/sales.schemas.js';
+import { BillingLookupQuery, CreateSaleBody, ListSalesQuery, VoidSaleBody } from '../validation/sales.schemas.js';
 
 export const salesRouter = Router();
 salesRouter.use(requireAuth());
@@ -30,6 +30,10 @@ salesRouter.post(
   requireStepUp('sale.void', paramId),
   c.voidSale,
 );
+
+// NIT/DPI lookup to prefill the buyer's name on the receipt (audited).
+export const billingRouter = Router();
+billingRouter.get('/lookup', requireAuth(), requireRole('regente', 'cajero'), validate({ query: BillingLookupQuery }), c.lookupBilling);
 
 export const privacyRouter = Router();
 privacyRouter.get('/current', requireAuth(), requireRole('regente', 'cajero'), validate({}), c.privacyNotice);

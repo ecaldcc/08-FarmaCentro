@@ -3,10 +3,10 @@ import { useNavigate, useParams } from 'react-router';
 import { http } from '../../api/http';
 import type { PrescriptionDetail, Product, Sale } from '../../api/types';
 import { useStepUp } from '../../auth/StepUp';
+import { PaymentModal } from '../../components/PaymentModal';
 import { QuantityInput } from '../../components/QuantityInput';
 import { Alert, Badge, Button, ErrorAlert, Loading, PageHeader, ReasonDialog } from '../../components/ui';
 import { formatDate, PRESCRIPTION_STATUS_LABELS } from '../../utils/format';
-import { PaymentModal } from '../pos/PosPage';
 
 /** R6 — Decrypted prescription (access is audited) and dispensation (step-up for controlled). */
 export function PrescriptionDetailPage() {
@@ -129,13 +129,14 @@ export function PrescriptionDetailPage() {
         <PaymentModal
           total={total}
           onClose={() => setPaying(false)}
-          onPay={async (payment) => {
+          onPay={async (payment, billing) => {
             const result = await withStepUp(
               { action: 'prescription.dispense', targetId: prescription.id, label: `Despachar controlados de la receta ${prescription.folio}` },
               () =>
                 http.post<{ dispensationId: string; sale: Sale }>(`/prescriptions/${prescription.id}/dispense`, {
                   items: selected.map((i) => ({ productId: i.productId, quantity: quantities[i.productId] })),
                   payment,
+                  billing,
                 }),
             );
             navigate(`/ventas/${result.sale.id}/comprobante`);

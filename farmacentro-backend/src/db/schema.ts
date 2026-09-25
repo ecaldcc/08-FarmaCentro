@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { AuditLog } from '../models/AuditLog.js';
+import { BillingParty } from '../models/BillingParty.js';
 import { Counter } from '../models/Counter.js';
 import { Customer } from '../models/Customer.js';
 import { Dispensation } from '../models/Dispensation.js';
@@ -22,6 +23,7 @@ export const MODELS = [
   InventoryMovement,
   Sale,
   Customer,
+  BillingParty,
   LoyaltyTransaction,
   Prescription,
   Dispensation,
@@ -46,6 +48,7 @@ export const API_ROLE_PRIVILEGES: Readonly<Record<string, readonly string[]>> = 
   inventory_movements: ['find', 'insert'],
   sales: ['find', 'insert', 'update'],
   customers: ['find', 'insert', 'update'],
+  billing_parties: ['find', 'insert', 'update'],
   loyalty_transactions: ['find', 'insert'],
   prescriptions: ['find', 'insert', 'update'],
   dispensations: ['find', 'insert'],

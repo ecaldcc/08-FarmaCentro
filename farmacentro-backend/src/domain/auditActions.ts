@@ -38,6 +38,8 @@ export const AUDIT_ACTIONS = [
   'customer.viewed',
   'customer.updated',
   'customer.consent.withdrawn',
+  'billing_party.created',
+  'billing_party.viewed',
   'prescription.created',
   'prescription.viewed',
   'prescription.cancelled',

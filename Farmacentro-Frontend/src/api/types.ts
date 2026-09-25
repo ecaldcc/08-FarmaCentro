@@ -121,6 +121,7 @@ export interface Sale {
   cashierUsername: string | null;
   customerId: string | null;
   customerName: string | null;
+  billing: { type: 'CF' | 'NIT' | 'CUI'; name: string; taxIdDisplay: string | null };
   items: SaleItem[];
   totalCents: number;
   payment: {

@@ -350,3 +350,23 @@ Usan `session.withTransaction()` (Atlas M0 es un conjunto de réplicas de 3 nodo
 | Ajuste de inventario | `inventory_lots` · `inventory_movements` · `audit_logs` |
 | Despacho con receta | `counters` · `inventory_lots` · `inventory_movements` · `sales` · `dispensations` · `prescriptions.status` · `audit_logs` |
 | Cambio de rol / baja de usuario | `users` · `audit_logs` |
+
+## 8. Facturación: `billing_parties` y `sales.billing` (agregado el 25/09/2026)
+
+Al cobrar se elige cómo se identifica al comprador en el comprobante: **CF** (consumidor final), **NIT** o **DPI** (CUI). Desde **Q2,500.00** no se permite CF (regla de la SAT).
+
+### `billing_parties` — compradores identificados
+
+| Campo | Tipo | Reglas | Clasif. |
+|---|---|---|---|
+| `type` | String enum | `NIT` · `CUI` | — |
+| `taxId` 🔒 | Cifrado | NIT validado por dígito verificador (0–9 o K); CUI de 13 dígitos con dígito verificador y departamento 01–22 | P |
+| `taxIdHmac` 🔑 | String | Índice ciego `HMAC(BLIND_INDEX_KEY, "<type>:<número>")` | P |
+| `name` | String | 3–150; se pide solo la primera vez que se usa ese NIT/DPI | P |
+| `createdBy` | ObjectId → users | | — |
+
+Índice: `{ type: 1, taxIdHmac: 1 }` único. Privilegios de la API: `find`, `insert`, `update`.
+
+### `sales.billing` — instantánea en la venta
+
+`{ type: 'CF' | 'NIT' | 'CUI', partyId, name, taxIdDisplay }`. `taxIdDisplay` guarda lo que se imprime: el **NIT completo** (como en una factura) o el **DPI enmascarado** (`XXXX XXXXX 0101`). El DPI completo nunca se guarda en `sales`. Las ventas anteriores a este cambio se muestran como CF.
