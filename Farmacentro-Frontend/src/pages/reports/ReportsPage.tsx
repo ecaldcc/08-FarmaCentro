@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { downloadFile, http, query } from '../../api/http';
 import type { ReportData } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
@@ -8,17 +9,63 @@ import { formatDateTime, todayGt } from '../../utils/format';
 interface ReportDef {
   key: string;
   label: string;
+  title: string;
+  description: string;
   path: string;
   permission: string;
   ranged: boolean;
 }
 
 const REPORTS: ReportDef[] = [
-  { key: 'failed', label: 'Intentos fallidos', path: '/reports/failed-logins', permission: 'reports.failedLogins', ranged: true },
-  { key: 'users', label: 'Usuarios y roles', path: '/reports/users-roles', permission: 'reports.usersRoles', ranged: false },
-  { key: 'voids', label: 'Anulaciones', path: '/reports/voids', permission: 'reports.voids', ranged: true },
-  { key: 'adjustments', label: 'Ajustes de inventario', path: '/reports/adjustments', permission: 'reports.adjustments', ranged: true },
-  { key: 'controlled', label: 'Despachos de controlados', path: '/reports/controlled-dispensations', permission: 'reports.controlled', ranged: true },
+  {
+    key: 'failed',
+    label: 'Intentos fallidos',
+    title: 'Reporte de intentos fallidos de acceso',
+    description:
+      'Contraseñas incorrectas, códigos o huellas rechazados, re-autenticaciones fallidas y cuentas bloqueadas, con usuario, IP y navegador.',
+    path: '/reports/failed-logins',
+    permission: 'reports.failedLogins',
+    ranged: true,
+  },
+  {
+    key: 'users',
+    label: 'Usuarios y roles',
+    title: 'Reporte de usuarios y roles',
+    description:
+      'Todas las cuentas con su rol, estado, huellas registradas, último acceso y último cambio de rol. Sirve para la revisión periódica de accesos.',
+    path: '/reports/users-roles',
+    permission: 'reports.usersRoles',
+    ranged: false,
+  },
+  {
+    key: 'voids',
+    label: 'Anulaciones',
+    title: 'Reporte de ventas anuladas',
+    description: 'Ventas anuladas por el Regente, con el motivo, quién la anuló y el segundo factor con que confirmó.',
+    path: '/reports/voids',
+    permission: 'reports.voids',
+    ranged: true,
+  },
+  {
+    key: 'adjustments',
+    label: 'Ajustes de inventario',
+    title: 'Reporte de ajustes de inventario',
+    description:
+      'Correcciones de existencias hechas con motivo y segundo factor: producto dañado, vencido, pérdida o error de conteo. ' +
+      'No incluye entradas de mercadería, ventas ni despachos: esos movimientos se consultan en el Kardex.',
+    path: '/reports/adjustments',
+    permission: 'reports.adjustments',
+    ranged: true,
+  },
+  {
+    key: 'controlled',
+    label: 'Despachos de controlados',
+    title: 'Reporte de despachos de medicamentos controlados',
+    description: 'Medicamentos controlados despachados con receta: folio, lote, cantidad y Regente. No muestra datos del paciente ni del médico.',
+    path: '/reports/controlled-dispensations',
+    permission: 'reports.controlled',
+    ranged: true,
+  },
 ];
 
 function renderCell(value: unknown): string {
@@ -62,7 +109,7 @@ export function ReportsPage() {
   return (
     <>
       <PageHeader
-        title="Reportes de auditoría"
+        title="Reportes"
         actions={
           can('reports.export') && (
             <Button variant="secondary" onClick={() => void exportCsv()}>
@@ -71,13 +118,22 @@ export function ReportsPage() {
           )
         }
       />
-      <div className="tabs" role="tablist">
-        {available.map((r) => (
-          <button key={r.key} type="button" role="tab" aria-selected={r.key === active} className={r.key === active ? 'active' : ''} onClick={() => setActive(r.key)}>
-            {r.label}
-          </button>
-        ))}
-      </div>
+      {available.length > 1 && (
+        <div className="tabs" role="tablist">
+          {available.map((r) => (
+            <button key={r.key} type="button" role="tab" aria-selected={r.key === active} className={r.key === active ? 'active' : ''} onClick={() => setActive(r.key)}>
+              {r.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <section className="report-intro">
+        <h2>{report.title}</h2>
+        <p className="muted">
+          {report.description}{' '}
+          {report.key === 'adjustments' && can('inventory.view') && <Link to="/inventario/movimientos">Ir al Kardex</Link>}
+        </p>
+      </section>
       {report.ranged && (
         <div className="filters">
           <label>
@@ -92,7 +148,9 @@ export function ReportsPage() {
       {!data ? (
         !error && <Loading />
       ) : data.rows.length === 0 ? (
-        <Empty>Sin datos en este periodo.</Empty>
+        <Empty>
+          {report.ranged ? 'No hay registros para este reporte en el periodo elegido.' : 'No hay registros para este reporte.'}
+        </Empty>
       ) : (
         <div className="table-scroll">
           <table className="table">

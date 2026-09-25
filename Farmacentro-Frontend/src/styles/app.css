@@ -738,3 +738,11 @@ select:disabled {
   color: var(--border);
   cursor: not-allowed;
 }
+
+.report-intro {
+  margin-bottom: 0.75rem;
+}
+.report-intro p {
+  margin: 0.25rem 0 0;
+  max-width: 900px;
+}
