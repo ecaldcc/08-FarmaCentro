@@ -1,30 +1,48 @@
 import { createHash, generateKeyPairSync, randomBytes, sign, type KeyObject } from 'node:crypto';
 import { isoBase64URL, isoCBOR } from '@simplewebauthn/server/helpers';
 
+const bytes = (buffer: Buffer): Uint8Array<ArrayBuffer> => new Uint8Array(buffer);
+
+interface KeyMaterial {
+  privateKey: KeyObject;
+  x: string;
+  y: string;
+  credentialId: Buffer;
+}
+
 /**
  * Software WebAuthn authenticator used ONLY by the automated tests. It emulates a platform
  * authenticator (Windows Hello) that verified the user (UV flag), producing the same JSON that
  * @simplewebauthn/browser sends. It is never shipped with the application.
  */
 export class SoftAuthenticator {
-  private readonly privateKey: KeyObject;
-  private readonly publicJwk: { x: string; y: string };
-  readonly credentialId: Buffer = randomBytes(32);
+  private readonly keys: KeyMaterial;
   counter = 0;
 
   constructor(
     private readonly origin: string,
     private readonly rpId: string,
     private readonly userVerified = true,
+    keys?: KeyMaterial,
   ) {
-    const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
-    this.privateKey = privateKey;
-    const jwk = publicKey.export({ format: 'jwk' }) as { x: string; y: string };
-    this.publicJwk = { x: jwk.x, y: jwk.y };
+    if (keys) {
+      this.keys = keys;
+    } else {
+      const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+      const jwk = publicKey.export({ format: 'jwk' }) as { x: string; y: string };
+      this.keys = { privateKey, x: jwk.x, y: jwk.y, credentialId: randomBytes(32) };
+    }
+  }
+
+  /** Same credential, but the device reports that the user was NOT verified (no fingerprint). */
+  withoutUserVerification(): SoftAuthenticator {
+    const clone = new SoftAuthenticator(this.origin, this.rpId, false, this.keys);
+    clone.counter = this.counter;
+    return clone;
   }
 
   get id(): string {
-    return isoBase64URL.fromBuffer(this.credentialId);
+    return isoBase64URL.fromBuffer(bytes(this.keys.credentialId));
   }
 
   private flags(attested: boolean): number {
@@ -38,18 +56,18 @@ export class SoftAuthenticator {
     const rpIdHash = createHash('sha256').update(this.rpId).digest();
     const counter = Buffer.alloc(4);
     counter.writeUInt32BE(this.counter);
-    const parts = [rpIdHash, Buffer.from([this.flags(attested)]), counter];
+    const parts: Buffer[] = [rpIdHash, Buffer.from([this.flags(attested)]), counter];
     if (attested) {
       const cose = new Map<number, number | Uint8Array>([
         [1, 2], // kty: EC2
         [3, -7], // alg: ES256
         [-1, 1], // crv: P-256
-        [-2, isoBase64URL.toBuffer(this.publicJwk.x)],
-        [-3, isoBase64URL.toBuffer(this.publicJwk.y)],
+        [-2, isoBase64URL.toBuffer(this.keys.x)],
+        [-3, isoBase64URL.toBuffer(this.keys.y)],
       ]);
       const idLength = Buffer.alloc(2);
-      idLength.writeUInt16BE(this.credentialId.length);
-      parts.push(Buffer.alloc(16), idLength, this.credentialId, Buffer.from(isoCBOR.encode(cose)));
+      idLength.writeUInt16BE(this.keys.credentialId.length);
+      parts.push(Buffer.alloc(16), idLength, this.keys.credentialId, Buffer.from(isoCBOR.encode(cose)));
     }
     return Buffer.concat(parts);
   }
@@ -65,7 +83,7 @@ export class SoftAuthenticator {
       new Map<string, unknown>([
         ['fmt', 'none'],
         ['attStmt', new Map()],
-        ['authData', new Uint8Array(this.authData(true))],
+        ['authData', bytes(this.authData(true))],
       ]) as never,
     );
     return {
@@ -75,8 +93,8 @@ export class SoftAuthenticator {
       authenticatorAttachment: 'platform',
       clientExtensionResults: {},
       response: {
-        clientDataJSON: isoBase64URL.fromBuffer(clientDataJSON),
-        attestationObject: isoBase64URL.fromBuffer(Buffer.from(attestationObject)),
+        clientDataJSON: isoBase64URL.fromBuffer(bytes(clientDataJSON)),
+        attestationObject: isoBase64URL.fromBuffer(bytes(Buffer.from(attestationObject))),
         transports: ['internal'],
       },
     };
@@ -90,7 +108,7 @@ export class SoftAuthenticator {
     const signature = sign(
       'sha256',
       Buffer.concat([authenticatorData, createHash('sha256').update(clientDataJSON).digest()]),
-      this.privateKey,
+      this.keys.privateKey,
     );
     return {
       id: this.id,
@@ -99,9 +117,9 @@ export class SoftAuthenticator {
       authenticatorAttachment: 'platform',
       clientExtensionResults: {},
       response: {
-        clientDataJSON: isoBase64URL.fromBuffer(clientDataJSON),
-        authenticatorData: isoBase64URL.fromBuffer(authenticatorData),
-        signature: isoBase64URL.fromBuffer(signature),
+        clientDataJSON: isoBase64URL.fromBuffer(bytes(clientDataJSON)),
+        authenticatorData: isoBase64URL.fromBuffer(bytes(authenticatorData)),
+        signature: isoBase64URL.fromBuffer(bytes(signature)),
       },
     };
   }

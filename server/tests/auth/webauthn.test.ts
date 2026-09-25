@@ -63,9 +63,7 @@ describe('WebAuthn (fingerprint) second factor', () => {
     const user = await createTestUser('cajero');
     const good = new SoftAuthenticator(ORIGIN, 'localhost');
     await registerFingerprint(user, good);
-    const noUv = Object.assign(Object.create(Object.getPrototypeOf(good)) as SoftAuthenticator, good, {
-      userVerified: false,
-    });
+    const noUv = good.withoutUserVerification();
 
     const client = new TestClient(await getApp());
     await client.post('/api/auth/login', { username: user.username, password: user.password });

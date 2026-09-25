@@ -21,7 +21,7 @@ function sendCsv(res: Response, filename: string, report: reports.Report): void 
 export async function listLogs(req: Request, res: Response): Promise<void> {
   const { query } = input<unknown, AuditLogsInput>(req);
   const result = await reports.listAuditLogs(query);
-  const { page, pageSize, ...filters } = query;
+  const { page, pageSize: _pageSize, ...filters } = query;
   await appendAudit(auditContext(req), {
     action: 'audit.viewed',
     result: 'success',
