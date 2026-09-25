@@ -22,4 +22,5 @@ const stop = async () => {
 };
 process.on('SIGINT', stop);
 process.on('SIGTERM', stop);
-await new Promise(() => undefined);
+// Keep the event loop alive: an unresolved promise alone makes Node exit with code 13.
+setInterval(() => undefined, 60 * 60 * 1000);
