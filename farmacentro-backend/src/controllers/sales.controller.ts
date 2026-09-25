@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { input } from '../middlewares/validate.js';
+import { lookupBillingParty } from '../services/billing.service.js';
 import * as customers from '../services/customer.service.js';
 import * as prescriptions from '../services/prescription.service.js';
 import * as sales from '../services/sale.service.js';
@@ -17,7 +18,12 @@ import type {
   DispenseInput,
   ListPrescriptionsInput,
 } from '../validation/prescription.schemas.js';
-import type { CreateSaleInput, ListSalesInput, VoidSaleInput } from '../validation/sales.schemas.js';
+import type {
+  BillingLookupInput,
+  CreateSaleInput,
+  ListSalesInput,
+  VoidSaleInput,
+} from '../validation/sales.schemas.js';
 
 type IdParams = { id: string };
 
@@ -46,6 +52,11 @@ export async function voidSale(req: Request, res: Response): Promise<void> {
   res.json(
     await sales.voidSale(params.id, body.reason, actor(req).id, auditContext(req), res.locals.stepUpMethod ?? 'unknown'),
   );
+}
+
+export async function lookupBilling(req: Request, res: Response): Promise<void> {
+  const { query } = input<unknown, BillingLookupInput>(req);
+  res.json(await lookupBillingParty(query.type, query.taxId, auditContext(req)));
 }
 
 // -------------------------------------------------------------------------------- customers

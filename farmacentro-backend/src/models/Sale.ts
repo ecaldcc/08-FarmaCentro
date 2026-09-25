@@ -19,6 +19,15 @@ export interface ISalePayment {
   authorizationRef: string | null;
 }
 
+/** Who the receipt is issued to: CF (consumidor final), NIT or DPI (CUI). */
+export interface ISaleBilling {
+  type: 'CF' | 'NIT' | 'CUI';
+  partyId: Types.ObjectId | null;
+  name: string;
+  /** Full NIT or masked DPI, as printed on the receipt. */
+  taxIdDisplay: string | null;
+}
+
 export interface ISaleVoid {
   voidedAt: Date;
   voidedBy: Types.ObjectId;
@@ -34,6 +43,7 @@ export interface ISale {
   items: ISaleItem[];
   totalCents: number;
   payment: ISalePayment;
+  billing: ISaleBilling;
   pointsEarned: number;
   dispensationId: Types.ObjectId | null;
   status: 'completed' | 'voided';
@@ -66,6 +76,16 @@ const SalePaymentSchema = new Schema<ISalePayment>(
   { _id: false, strict: 'throw' },
 );
 
+const SaleBillingSchema = new Schema<ISaleBilling>(
+  {
+    type: { type: String, enum: ['CF', 'NIT', 'CUI'], required: true },
+    partyId: { type: Schema.Types.ObjectId, ref: 'BillingParty', default: null },
+    name: { type: String, required: true },
+    taxIdDisplay: { type: String, default: null },
+  },
+  { _id: false, strict: 'throw' },
+);
+
 const SaleVoidSchema = new Schema<ISaleVoid>(
   {
     voidedAt: { type: Date, required: true },
@@ -84,6 +104,10 @@ const SaleSchema = new Schema<ISale>(
     items: { type: [SaleItemSchema], required: true },
     totalCents: { type: Number, required: true, min: 1 },
     payment: { type: SalePaymentSchema, required: true },
+    billing: {
+      type: SaleBillingSchema,
+      default: () => ({ type: 'CF', partyId: null, name: 'Consumidor final', taxIdDisplay: null }),
+    },
     pointsEarned: { type: Number, default: 0 },
     dispensationId: { type: Schema.Types.ObjectId, ref: 'Dispensation', default: null },
     status: { type: String, enum: ['completed', 'voided'], default: 'completed' },

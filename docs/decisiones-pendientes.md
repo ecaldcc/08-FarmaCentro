@@ -80,3 +80,10 @@
 8. Las pruebas automáticas usan `mongodb-memory-server` como conjunto de réplicas y un autenticador WebAuthn por software **solo en pruebas**; nunca tocan Atlas.
 9. Los correos nunca incluyen datos de salud ni de clientes; solo el código o el aviso.
 10. Los productos nuevos siempre nacen "no controlados"; solo el Regente cambia esa marca, con 2FA.
+
+## 4. Decisiones agregadas durante la implementación
+
+| Id | Tema | Supuesto que tomé | Pregunta |
+|---|---|---|---|
+| **D-27** | Monto desde el que se exige NIT/DPI | Se pidió "mayor a Q2,500"; se implementó **igual o mayor a Q2,500.00**, que es la regla de la SAT (constante `BILLING_ID_THRESHOLD_CENTS`). | ¿"Igual o mayor" (SAT) o "estrictamente mayor"? |
+| **D-28** | Protección del NIT y del DPI | Se guardan **cifrados** (AES-256-GCM) con índice ciego; en el comprobante el NIT sale completo y el DPI enmascarado. Cada consulta por número queda en la bitácora. | ¿El comprobante debe mostrar el DPI completo? |

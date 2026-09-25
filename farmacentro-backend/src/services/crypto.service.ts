@@ -59,7 +59,7 @@ export function decryptJson<T>(collection: string, id: Types.ObjectId | string, 
 }
 
 /** Blind index for exact-match search over encrypted values (phone, email). */
-export function blindIndex(kind: 'phone' | 'email', normalizedValue: string): string {
+export function blindIndex(kind: 'phone' | 'email' | 'NIT' | 'CUI', normalizedValue: string): string {
   const key = Buffer.from(env.BLIND_INDEX_KEY, 'base64');
   return createHmac('sha256', key).update(`${kind}:${normalizedValue}`).digest('hex');
 }

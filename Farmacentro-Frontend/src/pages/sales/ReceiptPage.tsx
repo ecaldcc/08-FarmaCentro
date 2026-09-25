@@ -30,8 +30,12 @@ export function ReceiptPage() {
         <dd>{sale.saleNumber}</dd>
         <dt>Fecha</dt>
         <dd>{formatDateTime(sale.createdAt)}</dd>
-        <dt>Cliente</dt>
-        <dd>{sale.customerName ?? 'Consumidor final'}</dd>
+        <dt>Facturado a</dt>
+        <dd>{sale.billing.name}</dd>
+        <dt>{sale.billing.type === 'CUI' ? 'DPI' : 'NIT'}</dt>
+        <dd>{sale.billing.type === 'CF' ? 'CF' : sale.billing.taxIdDisplay}</dd>
+        <dt>Cliente de fidelización</dt>
+        <dd>{sale.customerName ?? '—'}</dd>
         <dt>Atendió</dt>
         <dd>{sale.cashierUsername ?? '—'}</dd>
       </dl>
