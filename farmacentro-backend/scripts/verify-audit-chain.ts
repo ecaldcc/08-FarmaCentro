@@ -7,9 +7,12 @@
 import { loadScriptEnv } from './lib/env.js';
 
 loadScriptEnv();
-const uri = process.env.MONGODB_URI_AUDIT_READER ?? process.env.MONGODB_URI_ADMIN;
+const uri =
+  process.env.MONGODB_URI_AUDIT_READER ??
+  process.env.MONGODB_URI_ADMIN ??
+  (process.env.NODE_ENV !== 'production' ? process.env.MONGODB_URI : undefined);
 if (!uri) {
-  console.error('Define MONGODB_URI_AUDIT_READER (o MONGODB_URI_ADMIN) en scripts/.env.');
+  console.error('Define MONGODB_URI_AUDIT_READER (o MONGODB_URI_ADMIN) en scripts/.env, o MONGODB_URI en .env.');
   process.exit(1);
 }
 
