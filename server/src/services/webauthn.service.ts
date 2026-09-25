@@ -10,6 +10,7 @@ import { Types } from 'mongoose';
 import { env } from '../config/env.js';
 import { WebAuthnCredential, type IWebAuthnCredential } from '../models/WebAuthnCredential.js';
 import type { WebAuthnChallenge } from '../types/express.js';
+import { toBuffer } from '../utils/binary.js';
 
 export const CHALLENGE_TTL_MS = 2 * 60 * 1000;
 export const MAX_CREDENTIALS_PER_USER = 5;
@@ -65,7 +66,7 @@ export async function verifyAssertion(
       requireUserVerification: true,
       credential: {
         id: credential.credentialId,
-        publicKey: new Uint8Array(credential.publicKey),
+        publicKey: new Uint8Array(toBuffer(credential.publicKey)),
         counter: credential.counter,
         transports: credential.transports,
       },
