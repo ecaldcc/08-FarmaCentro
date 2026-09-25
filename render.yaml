@@ -1,0 +1,57 @@
+# Render Blueprint for the FarmaCentro API (farmacentro-backend).
+# Secrets are declared with `sync: false`: Render asks for them when the Blueprint is created and
+# they never live in this repository. Guide: docs/manual-instalacion.md §5.
+services:
+  - type: web
+    name: farmacentro-api
+    runtime: node
+    plan: free
+    region: virginia
+    branch: main
+    rootDir: farmacentro-backend
+    # devDependencies (TypeScript) are needed to compile; the MongoDB test binary is not.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22.16.0
+      - key: NODE_ENV
+        value: production
+      - key: MONGOMS_DISABLE_POSTINSTALL
+        value: "1"
+      # Browser → Netlify proxy → Render load balancer → API: two trusted hops for the client IP.
+      - key: TRUST_PROXY
+        value: "2"
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: RP_ID
+        sync: false
+      - key: RP_NAME
+        value: FarmaCentro
+      - key: MONGODB_URI
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: DATA_ENC_ACTIVE_VERSION
+        value: "1"
+      - key: DATA_ENC_KEY_V1
+        sync: false
+      - key: BLIND_INDEX_KEY
+        sync: false
+      - key: OTP_HMAC_KEY
+        sync: false
+      # Render's free instances block SMTP: e-mail goes through Brevo's HTTPS API.
+      - key: MAIL_TRANSPORT
+        value: brevo
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: STEP_UP_ALLOW_EMAIL
+        value: "true"
+      - key: SERVE_CLIENT
+        value: "false"
+      - key: LOG_LEVEL
+        value: info

@@ -75,52 +75,87 @@ Abre http://localhost:5173. Vite reenvía `/api` al backend, así que el navegad
 
 ## 4. MongoDB Atlas (mínimo privilegio)
 
-1. Crea un proyecto y un clúster **M0**. En **Network Access** agrega solo tu IP (o la del servidor de despliegue).
-2. En **Database Access → Custom Roles** crea:
+1. Crea un proyecto y un clúster **M0** en **AWS, N. Virginia (us-east-1)**: la misma región que el servicio de Render (`virginia`), para menor latencia.
+2. **Network Access:** en Render, abre el servicio → **Connect → Outbound** y agrega esas IPs en Atlas. Si tu cuenta de Render no muestra IPs de salida fijas, agrega `0.0.0.0/0` y deja la protección en usuarios con contraseñas largas y TLS; esa excepción ya está declarada en `limitaciones-conocidas.md`. Agrega también tu IP para ejecutar los scripts desde tu PC.
+3. En **Database Access → Custom Roles** crea:
    - `farmacentroApi`, con las acciones por colección que imprime `npm run setup-db -- --print-role`. Las colecciones `audit_logs`, `inventory_movements`, `loyalty_transactions` y `dispensations` quedan **solo con `find` e `insert`**.
    - `auditReader`: solo `find` sobre `audit_logs`.
-3. Crea tres usuarios de base de datos:
+4. Crea tres usuarios de base de datos, con contraseñas generadas por Atlas:
 
 | Usuario | Rol | Dónde se usa |
 |---|---|---|
-| `farmacentro_migrator` | `readWrite` + `dbAdmin` sobre `farmacentro` | `farmacentro-backend/scripts/.env` → `MONGODB_URI_ADMIN` |
-| `farmacentro_api` | `farmacentroApi` | `farmacentro-backend/.env` → `MONGODB_URI` y `scripts/.env` → `MONGODB_URI_API` |
-| `farmacentro_audit_reader` | `auditReader` | `scripts/.env` → `MONGODB_URI_AUDIT_READER` (grupo auditor) |
+| `farmacentro_migrator` | `readWrite` + `dbAdmin` sobre `farmacentro` | Solo en tu PC: `.env.production` → `MONGODB_URI_ADMIN` |
+| `farmacentro_api` | `farmacentroApi` | Render → `MONGODB_URI`, y `.env.production` → `MONGODB_URI` y `MONGODB_URI_API` |
+| `farmacentro_audit_reader` | `auditReader` | `.env.production` → `MONGODB_URI_AUDIT_READER` (y grupo auditor) |
 
-4. Ejecuta `npm run setup-db` y `npm run seed`. Genera la evidencia de privilegios con `npm run check-db-privileges`; se guarda en `docs/evidencias/`.
+La cadena de conexión de cada usuario es la que muestra Atlas en **Connect → Drivers**, con `/farmacentro` como base de datos antes del `?`.
 
 Atlas M0 no ofrece respaldos automáticos: usa `npm run backup` y `npm run restore-test -- backups/<archivo>.bak`.
 
-## 5. Despliegue (un solo origen con HTTPS)
+## 5. Despliegue: Netlify (frontend) + Render (backend) + Atlas
 
-La cookie `SameSite=Strict`, la CSP `'self'` y WebAuthn exigen que el cliente y la API compartan el **mismo dominio con HTTPS**. Se compila el frontend y lo sirve el backend:
-
-```bash
-cd Farmacentro-Frontend
-npm ci
-npm run build
+```text
+Navegador ──HTTPS──> Netlify (farmacentro-xxx.netlify.app)
+                       ├── /            → Farmacentro-Frontend/dist
+                       └── /api/*       → proxy → Render (farmacentro-api.onrender.com) ──TLS──> MongoDB Atlas
 ```
 
-```bash
-cd farmacentro-backend
-npm ci
-npm run build
-npm start
-```
+Netlify reenvía `/api/*` a Render. Así el navegador solo habla con el dominio de Netlify: la cookie de sesión sigue siendo `SameSite=Strict`, la CSP `'self'` y la huella (WebAuthn) usa el dominio de Netlify. Si el navegador llamara directo a Render, la cookie no viajaría y el login no funcionaría.
 
-Variables de `farmacentro-backend/.env` en producción:
+### 5.1 Antes de empezar
+
+- **Nombre del sitio de Netlify:** decide uno libre, por ejemplo `farmacentro-umg`. La URL será `https://farmacentro-umg.netlify.app`; úsala en todos los pasos siguientes.
+- **Brevo** (correo): crea una cuenta gratuita en brevo.com, verifica un **remitente** en *Senders, Domains & Dedicated IPs → Senders* (puede ser un Gmail del equipo) y genera una **API key** en *SMTP & API → API Keys*. Render gratis bloquea el SMTP, por eso los códigos salen por la API de Brevo.
+- **Claves:** en `farmacentro-backend`, ejecuta `npm run generate-keys`. Esas mismas claves van en Render y en tu `.env.production`: si no coinciden, la API no podrá descifrar los datos cargados desde tu PC.
+
+### 5.2 Preparar la base en Atlas (desde tu PC)
+
+1. En `farmacentro-backend`, copia `.env.production.example` a `.env.production` (no se sube a Git) y complétalo: cadenas de Atlas, claves, Brevo, `CLIENT_ORIGIN`/`RP_ID` con la URL de Netlify, `SEED_PASSWORD` (privada, 12+ caracteres) y `SEED_EMAIL` (buzón real del equipo; cada usuario recibe sus códigos en `buzon+regente@…`, `buzon+cajero@…`, etc.).
+2. Crea colecciones, índices y el registro génesis, y carga los datos de prueba:
+   ```bash
+   npm run setup-db:prod
+   ```
+   ```bash
+   npm run seed:prod
+   ```
+3. Genera las evidencias para el grupo auditor:
+   ```bash
+   npm run check-db-privileges:prod
+   ```
+   ```bash
+   npm run verify-audit:prod
+   ```
+
+### 5.3 Backend en Render
+
+1. En Render: **New → Blueprint**, conecta el repositorio `ecaldcc/08-FarmaCentro` (rama `main`). Render lee `render.yaml` de la raíz: servicio `farmacentro-api`, carpeta `farmacentro-backend`, build `npm ci --include=dev && npm run build`, arranque `npm start` y chequeo en `/api/health`.
+2. Render pide los valores marcados como secretos. Usa los mismos de tu `.env.production`:
 
 | Variable | Valor |
 |---|---|
-| `NODE_ENV` | `production` |
-| `SERVE_CLIENT` | `true` (usa `../Farmacentro-Frontend/dist`; otra ruta con `CLIENT_DIST`) |
-| `CLIENT_ORIGIN` | `https://<dominio>` |
-| `RP_ID` | `<dominio>` (sin `https://` ni puerto) |
-| `TRUST_PROXY` | `1` si hay un proxy o balanceador con TLS delante |
-| `MAIL_TRANSPORT` | `smtp`, con un servidor SMTP real (`console` no está permitido en producción) |
-| `STEP_UP_ALLOW_EMAIL` | Según la decisión D-03 |
+| `CLIENT_ORIGIN` | `https://farmacentro-umg.netlify.app` |
+| `RP_ID` | `farmacentro-umg.netlify.app` |
+| `MONGODB_URI` | Cadena de Atlas del usuario `farmacentro_api` |
+| `SESSION_SECRET`, `DATA_ENC_KEY_V1`, `BLIND_INDEX_KEY`, `OTP_HMAC_KEY` | Las de `npm run generate-keys` |
+| `BREVO_API_KEY` | La API key de Brevo |
+| `MAIL_FROM` | `FarmaCentro <remitente-verificado@gmail.com>` |
 
-Para sembrar en producción define `SEED_PASSWORD` en `scripts/.env`: la contraseña de demostración es pública. Cuando la aplicación esté desplegada, pega el enlace en la sección **Despliegue** del `README.md`.
+   Los demás valores ya vienen en `render.yaml`: `NODE_ENV=production`, `MAIL_TRANSPORT=brevo`, `TRUST_PROXY=2`, `STEP_UP_ALLOW_EMAIL=true` (decisión D-03), Node 22.16.0.
+3. Cuando termine el despliegue, abre `https://farmacentro-api.onrender.com/api/health`: debe responder `{"status":"ok"}`. Si Render asignó otra URL (por ejemplo con un sufijo), cópiala para el paso siguiente.
+
+### 5.4 Frontend en Netlify
+
+1. Si la URL de Render no es `farmacentro-api.onrender.com`, cámbiala en `Farmacentro-Frontend/netlify.toml` (regla `/api/*`) y sube el cambio.
+2. En Netlify: **Add new site → Import an existing project**, elige el repositorio y configura **Base directory** = `Farmacentro-Frontend`. El comando (`npm run build`), la carpeta publicada (`dist`), la versión de Node, el proxy a Render y las cabeceras de seguridad (CSP, HSTS) se leen de `netlify.toml`.
+3. En **Site configuration → Change site name**, pon el nombre elegido en 5.1 (`farmacentro-umg`).
+4. Abre `https://farmacentro-umg.netlify.app`, inicia sesión con un usuario de prueba y confirma que el código llega al buzón de `SEED_EMAIL`.
+5. Pega la URL en la sección **Despliegue** del `README.md`.
+
+### 5.5 Qué tener en cuenta
+
+- **Render gratis se duerme** tras 15 minutos sin tráfico y tarda de 30 a 60 segundos en despertar. El proxy de Netlify espera unos 26 segundos, así que la primera petición puede fallar: abre antes `https://farmacentro-api.onrender.com/api/health` y espera la respuesta.
+- **IP en la bitácora:** con `TRUST_PROXY=2` la API toma la IP del navegador (Netlify y el balanceador de Render son los dos saltos de confianza). Verifícalo en la primera prueba mirando la bitácora.
+- **Credenciales del grupo auditor:** se entregan por un canal privado, nunca en el repositorio, junto con el ancla de la bitácora (`npm run verify-audit:prod`).
 
 ## 6. Verificación
 
