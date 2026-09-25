@@ -44,7 +44,7 @@ export async function listSales(req: Request, res: Response): Promise<void> {
 }
 
 export async function getSale(req: Request, res: Response): Promise<void> {
-  res.json(await sales.getSale(input<IdParams>(req).params.id, actor(req)));
+  res.json(await sales.getSale(input<IdParams>(req).params.id, actor(req), auditContext(req)));
 }
 
 export async function voidSale(req: Request, res: Response): Promise<void> {
