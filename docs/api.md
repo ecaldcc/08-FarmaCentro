@@ -422,7 +422,7 @@ billing = z.discriminatedUnion('type', [
 
 - Total ≥ Q2,500.00 con `CF` → 400 (`body.billing.type`), sin tocar existencias.
 - NIT/DPI no registrado y sin `name` → 400 (`body.billing.name`). Con `name`, se registra cifrado (evento `billing_party.created`) dentro de la transacción de la venta.
-- La respuesta incluye `billing: { type, name, taxIdDisplay }` y `customerName` (cliente de fidelización, si hay).
+- La respuesta incluye `billing: { type, name, taxIdDisplay }` y `customerName` (cliente de fidelización, si hay). `GET /sales/:id` y las respuestas de crear, anular y despachar devuelven el DPI completo (formato `1234 56789 0101`); `GET /sales` lo devuelve enmascarado. Cada `GET /sales/:id` de una venta con DPI registra `billing_party.viewed`.
 
 **60. `GET /billing-parties/lookup`** · roles regente, cajero
 

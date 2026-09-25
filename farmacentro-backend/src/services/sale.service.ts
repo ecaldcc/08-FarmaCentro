@@ -14,7 +14,7 @@ import { Errors, HttpError } from '../utils/httpError.js';
 import { op } from '../utils/trusted.js';
 import type { BillingInput, ListSalesInput, PaymentInput, SaleItemsInput } from '../validation/sales.schemas.js';
 import { appendAudit, runAuditedTransaction, type AuditContext, type AuditedTx } from './audit.service.js';
-import { resolveBilling } from './billing.service.js';
+import { resolveBilling, revealTaxIds } from './billing.service.js';
 import { applyLotDelta } from './inventory.service.js';
 
 /** Loyalty rule (decision D-14): 1 point per Q10 of the total. */
@@ -34,7 +34,9 @@ export function saleDto(
   sale: ISale,
   names: Map<string, string> = new Map(),
   customers: Map<string, string> = new Map(),
+  revealedTaxIds: Map<string, string> = new Map(),
 ) {
+  const partyId = sale.billing?.partyId ? String(sale.billing.partyId) : null;
   return {
     id: String(sale._id),
     saleNumber: sale.saleNumber,
@@ -58,7 +60,8 @@ export function saleDto(
     billing: {
       type: sale.billing?.type ?? 'CF',
       name: sale.billing?.name ?? 'Consumidor final',
-      taxIdDisplay: sale.billing?.taxIdDisplay ?? null,
+      // Full identifier only when it was explicitly revealed (receipt/detail); masked DPI otherwise.
+      taxIdDisplay: (partyId && revealedTaxIds.get(partyId)) ?? sale.billing?.taxIdDisplay ?? null,
     },
     pointsEarned: sale.pointsEarned,
     fromPrescription: sale.dispensationId !== null,
@@ -82,13 +85,20 @@ async function customerNames(ids: Types.ObjectId[]): Promise<Map<string, string>
   return new Map(customers.map((c) => [String(c._id), c.fullName]));
 }
 
-/** DTOs with cashier, voider and customer names resolved. */
-export async function presentSales(sales: ISale[]) {
-  const [names, customers] = await Promise.all([
+/**
+ * DTOs with cashier, voider and customer names resolved. With `revealTaxId`, the full DPI is
+ * decrypted for the receipt (decision D-28); listings keep it masked (data minimisation).
+ */
+export async function presentSales(sales: ISale[], options: { revealTaxId?: boolean } = {}) {
+  const partyIds = options.revealTaxId
+    ? sales.flatMap((s) => (s.billing?.type === 'CUI' && s.billing.partyId ? [s.billing.partyId] : []))
+    : [];
+  const [names, customers, revealed] = await Promise.all([
     usernames(sales.flatMap((s) => [s.cashierId, ...(s.void ? [s.void.voidedBy] : [])])),
     customerNames(sales.flatMap((s) => (s.customerId ? [s.customerId] : []))),
+    revealTaxIds(partyIds),
   ]);
-  return sales.map((s) => saleDto(s, names, customers));
+  return sales.map((s) => saleDto(s, names, customers, revealed));
 }
 
 async function usernames(ids: Types.ObjectId[]): Promise<Map<string, string>> {
@@ -294,7 +304,8 @@ export async function createSale(
     });
     return created;
   });
-  const [dto] = await presentSales([sale]);
+  // The cashier just typed the identifier: the response can show it in full for the receipt.
+  const [dto] = await presentSales([sale], { revealTaxId: true });
   return dto!;
 }
 
@@ -326,13 +337,23 @@ export async function listSales(query: ListSalesInput, actor: { id: string; role
   return { items: await presentSales(items), page: query.page, pageSize: query.pageSize, total };
 }
 
-export async function getSale(id: string, actor: { id: string; role: Role }) {
+export async function getSale(id: string, actor: { id: string; role: Role }, ctx: AuditContext) {
   const sale = await Sale.findById(id).lean();
   // 404 (not 403) so a cashier cannot probe for other people's sales.
   if (!sale || (actor.role === 'cajero' && String(sale.cashierId) !== actor.id)) {
     throw Errors.notFound();
   }
-  const [dto] = await presentSales([sale]);
+  if (sale.billing?.type === 'CUI' && sale.billing.partyId) {
+    // Decrypting the full DPI for the receipt is an access to personal data: audited.
+    await appendAudit(ctx, {
+      action: 'billing_party.viewed',
+      result: 'success',
+      entity: 'billing_party',
+      entityId: sale.billing.partyId,
+      details: { saleNumber: sale.saleNumber, purpose: 'receipt' },
+    });
+  }
+  const [dto] = await presentSales([sale], { revealTaxId: true });
   return dto!;
 }
 
@@ -414,6 +435,6 @@ export async function voidSale(id: string, reason: string, actorId: string, ctx:
     });
     return voided;
   });
-  const [dto] = await presentSales([updated]);
+  const [dto] = await presentSales([updated], { revealTaxId: true });
   return dto!;
 }
