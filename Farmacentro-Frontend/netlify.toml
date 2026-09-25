@@ -1,0 +1,34 @@
+# Netlify configuration for the FarmaCentro web client (Base directory: Farmacentro-Frontend).
+# Guide: docs/manual-instalacion.md §5.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22.16.0"
+
+# The API is proxied to Render so the browser only talks to this origin: the session cookie stays
+# first-party with SameSite=Strict, the CSP stays 'self' and WebAuthn uses this domain as RP ID.
+# Replace the host if Render assigned a different URL to the service.
+[[redirects]]
+  from = "/api/*"
+  to = "https://farmacentro-api.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# Single-page application: every other route is handled by React Router.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"

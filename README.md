@@ -10,11 +10,14 @@ Prototipo académico del curso **Seguridad y Auditoría de Sistemas** (Universid
 
 | | |
 |---|---|
-| **Aplicación en línea** | **Pendiente de despliegue** — pegar aquí el enlace de producción |
+| **Aplicación en línea** | **Pendiente de despliegue** — pegar aquí el enlace de Netlify |
+| **Frontend** | Netlify (`Farmacentro-Frontend`, configurado en `netlify.toml`) |
+| **Backend (API)** | Render (`farmacentro-backend`, configurado en `render.yaml`) |
+| **Base de datos** | MongoDB Atlas M0 (AWS N. Virginia) |
 | **Repositorio** | [github.com/ecaldcc/08-FarmaCentro](https://github.com/ecaldcc/08-FarmaCentro) |
-| **Estado** | En desarrollo · pendiente de entrega al grupo auditor |
+| **Estado** | Configuración lista · pendiente de crear los servicios y entregar al grupo auditor |
 
-> **Requisitos del despliegue:** HTTPS y **un solo dominio para el cliente y la API** (la cookie `SameSite=Strict` y la huella con WebAuthn lo exigen). Se compila el frontend (`npm run build` en `Farmacentro-Frontend`) y el backend lo sirve con `SERVE_CLIENT=true`, `NODE_ENV=production`, `CLIENT_ORIGIN` y `RP_ID` con el dominio público, y un SMTP real. Guía completa en [docs/manual-instalacion.md](docs/manual-instalacion.md#5-despliegue-un-solo-origen-con-https).
+> **Cómo está armado:** Netlify sirve el cliente y reenvía `/api/*` a Render, así el navegador solo ve un dominio con HTTPS: la cookie de sesión sigue siendo `SameSite=Strict` y la huella (WebAuthn) funciona. Los correos salen por la API de Brevo, porque Render gratis bloquea el SMTP. Paso a paso en [docs/manual-instalacion.md](docs/manual-instalacion.md#5-despliegue-netlify-frontend--render-backend--atlas).
 
 ---
 
@@ -47,7 +50,7 @@ La re-autenticación (step-up) sirve para **una sola operación**, queda ligada 
 - **API:** Node.js 22 + Express 5 + TypeScript, en capas `routes → controllers → services → models`
 - **Base de datos:** MongoDB local (replica set) en desarrollo y MongoDB Atlas (M0) para la entrega, con Mongoose 9, transacciones y un usuario de base de datos con rol personalizado de mínimo privilegio
 - **Seguridad:** helmet (CSP), CORS restringido, verificación de origen, Zod, `sanitizeFilter`, `express-rate-limit`, `express-session` + `connect-mongo`
-- **Pruebas:** Vitest + Supertest + MongoDB en memoria (140 pruebas, incluidas las de seguridad)
+- **Pruebas:** Vitest + Supertest + MongoDB en memoria (145 pruebas, incluidas las de seguridad)
 
 ## Estructura
 

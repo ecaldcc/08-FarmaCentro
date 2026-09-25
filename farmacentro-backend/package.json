@@ -7,7 +7,7 @@
     "predev": "tsx scripts/setup-db.ts --seed-if-empty",
     "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsc -p tsconfig.build.json",
-    "start": "node --env-file=.env dist/index.js",
+    "start": "node --env-file-if-exists=.env dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
@@ -20,7 +20,11 @@
     "backup": "tsx scripts/backup.ts",
     "restore-test": "tsx scripts/restore-test.ts",
     "audit:check": "tsx scripts/audit-report.ts",
-    "init-replica-set": "tsx scripts/init-replica-set.ts"
+    "init-replica-set": "tsx scripts/init-replica-set.ts",
+    "setup-db:prod": "tsx scripts/setup-db.ts --env=.env.production",
+    "seed:prod": "tsx scripts/seed.ts --env=.env.production",
+    "check-db-privileges:prod": "tsx scripts/check-db-privileges.ts --env=.env.production",
+    "verify-audit:prod": "tsx scripts/verify-audit-chain.ts --env=.env.production"
   },
   "dependencies": {
     "@simplewebauthn/server": "14.0.2",
