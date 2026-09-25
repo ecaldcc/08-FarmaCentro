@@ -292,6 +292,6 @@ export async function dispensePrescription(
     });
     return { dispensationId: String(dispensationId), sale };
   });
-  const [sale] = await presentSales([result.sale]);
+  const [sale] = await presentSales([result.sale], { revealTaxId: true });
   return { dispensationId: result.dispensationId, sale: sale! };
 }

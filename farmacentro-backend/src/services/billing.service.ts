@@ -1,12 +1,13 @@
 import { Types } from 'mongoose';
-import { BILLING_ID_THRESHOLD_CENTS, displayTaxId, type TaxIdType } from '../domain/taxId.js';
+import { BILLING_ID_THRESHOLD_CENTS, displayTaxId, storedTaxIdDisplay, type TaxIdType } from '../domain/taxId.js';
 import { BillingParty } from '../models/BillingParty.js';
 import type { ISaleBilling } from '../models/Sale.js';
 import { Errors } from '../utils/httpError.js';
 import { formatQuetzales } from '../utils/money.js';
+import { op } from '../utils/trusted.js';
 import type { BillingInput } from '../validation/sales.schemas.js';
 import { appendAudit, type AuditContext, type AuditedTx } from './audit.service.js';
-import { blindIndex, encryptField } from './crypto.service.js';
+import { blindIndex, decryptField, encryptField } from './crypto.service.js';
 
 const COLLECTION = 'billing_parties';
 export const CONSUMIDOR_FINAL = 'Consumidor final';
@@ -58,7 +59,7 @@ export async function resolveBilling(
       type: billing.type,
       partyId: existing._id,
       name: existing.name,
-      taxIdDisplay: displayTaxId(billing.type, billing.taxId),
+      taxIdDisplay: storedTaxIdDisplay(billing.type, billing.taxId),
     };
   }
   if (!billing.name) {
@@ -85,5 +86,17 @@ export async function resolveBilling(
     { session: tx.session },
   );
   tx.audit({ action: 'billing_party.created', result: 'success', entity: 'billing_party', entityId: id, details: { type: billing.type } });
-  return { type: billing.type, partyId: id, name: billing.name, taxIdDisplay: displayTaxId(billing.type, billing.taxId) };
+  return { type: billing.type, partyId: id, name: billing.name, taxIdDisplay: storedTaxIdDisplay(billing.type, billing.taxId) };
+}
+
+/**
+ * Full DPI/NIT for the receipt (decision D-28), decrypted from billing_parties.
+ * Returns partyId → formatted identifier.
+ */
+export async function revealTaxIds(partyIds: Types.ObjectId[]): Promise<Map<string, string>> {
+  if (partyIds.length === 0) return new Map();
+  const parties = await BillingParty.find({ _id: op({ $in: partyIds }) }).lean();
+  return new Map(
+    parties.map((p) => [String(p._id), displayTaxId(p.type, decryptField(COLLECTION, p._id, 'taxId', p.taxId))]),
+  );
 }

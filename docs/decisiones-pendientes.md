@@ -85,5 +85,5 @@
 
 | Id | Tema | Supuesto que tomé | Pregunta |
 |---|---|---|---|
-| **D-27** | Monto desde el que se exige NIT/DPI | Se pidió "mayor a Q2,500"; se implementó **igual o mayor a Q2,500.00**, que es la regla de la SAT (constante `BILLING_ID_THRESHOLD_CENTS`). | ¿"Igual o mayor" (SAT) o "estrictamente mayor"? |
-| **D-28** | Protección del NIT y del DPI | Se guardan **cifrados** (AES-256-GCM) con índice ciego; en el comprobante el NIT sale completo y el DPI enmascarado. Cada consulta por número queda en la bitácora. | ¿El comprobante debe mostrar el DPI completo? |
+| **D-27** | Monto desde el que se exige NIT/DPI | ✅ **Confirmada (25/09/2026):** igual o mayor a Q2,500.00, como exige la SAT (`BILLING_ID_THRESHOLD_CENTS`). | — |
+| **D-28** | DPI en el comprobante | ✅ **Confirmada (25/09/2026):** el comprobante y el detalle de la venta muestran el **DPI completo**. Se guarda solo cifrado en `billing_parties`; se descifra al abrir el comprobante (evento `billing_party.viewed` con `purpose: receipt`). La lista de ventas y la copia en `sales` quedan enmascaradas. | — |

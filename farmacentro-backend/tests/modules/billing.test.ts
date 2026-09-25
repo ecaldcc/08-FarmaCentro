@@ -86,13 +86,23 @@ describe('receipt identification at checkout (CF / NIT / DPI)', () => {
     expect(await BillingParty.countDocuments()).toBe(1);
   });
 
-  it('masks the DPI on the receipt and never stores it in clear', async () => {
-    const { sell } = await setup();
+  it('prints the full DPI on the receipt but never stores it in clear (D-28)', async () => {
+    const { sell, client } = await setup();
     const res = await sell(1, { type: 'CUI', taxId: CUI, name: 'Pedro Pérez' });
     expect(res.status).toBe(201);
-    expect(res.body.billing.taxIdDisplay).toBe('XXXX XXXXX 0101');
+    expect(res.body.billing.taxIdDisplay).toBe('1234 56789 0101');
+
+    // Stored only encrypted; the sale keeps a masked copy.
     expect(JSON.stringify(await Sale.collection.findOne({}))).not.toContain(CUI);
     expect(JSON.stringify(await BillingParty.collection.findOne({}))).not.toContain(CUI);
+    expect((await Sale.findById(res.body.id).lean())?.billing.taxIdDisplay).toBe('XXXX XXXXX 0101');
+
+    // Receipt/detail decrypts it (audited); the list keeps it masked.
+    const receipt = await client.get(`/api/sales/${res.body.id}`);
+    expect(receipt.body.billing.taxIdDisplay).toBe('1234 56789 0101');
+    expect(await AuditLog.exists({ action: 'billing_party.viewed', 'details.purpose': 'receipt' })).toBeTruthy();
+    const list = await client.get('/api/sales');
+    expect(list.body.items[0].billing.taxIdDisplay).toBe('XXXX XXXXX 0101');
   });
 
   it('rejects invalid identifiers', async () => {

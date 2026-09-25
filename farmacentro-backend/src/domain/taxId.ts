@@ -41,7 +41,17 @@ export function isValidCui(cui: string): boolean {
   return total % 11 === Number(cui[8]) && department >= 1 && department <= 22 && municipality >= 1;
 }
 
-/** What is printed on the receipt: full NIT (as on an invoice), masked DPI. */
+/** What is printed on the receipt (decision D-28): full NIT and full DPI, formatted. */
 export function displayTaxId(type: TaxIdType, taxId: string): string {
-  return type === 'NIT' ? `${taxId.slice(0, -1)}-${taxId.slice(-1)}` : `XXXX XXXXX ${taxId.slice(-4)}`;
+  return type === 'NIT'
+    ? `${taxId.slice(0, -1)}-${taxId.slice(-1)}`
+    : `${taxId.slice(0, 4)} ${taxId.slice(4, 9)} ${taxId.slice(9)}`;
+}
+
+/**
+ * Value kept in clear in `sales.billing` and in listings: full NIT, masked DPI. The full DPI only
+ * exists encrypted in billing_parties and is decrypted for the receipt.
+ */
+export function storedTaxIdDisplay(type: TaxIdType, taxId: string): string {
+  return type === 'NIT' ? displayTaxId(type, taxId) : `XXXX XXXXX ${taxId.slice(-4)}`;
 }

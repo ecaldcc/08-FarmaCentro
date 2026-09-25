@@ -369,4 +369,4 @@ Al cobrar se elige cómo se identifica al comprador en el comprobante: **CF** (c
 
 ### `sales.billing` — instantánea en la venta
 
-`{ type: 'CF' | 'NIT' | 'CUI', partyId, name, taxIdDisplay }`. `taxIdDisplay` guarda lo que se imprime: el **NIT completo** (como en una factura) o el **DPI enmascarado** (`XXXX XXXXX 0101`). El DPI completo nunca se guarda en `sales`. Las ventas anteriores a este cambio se muestran como CF.
+`{ type: 'CF' | 'NIT' | 'CUI', partyId, name, taxIdDisplay }`. `taxIdDisplay` guarda el **NIT completo** o el **DPI enmascarado** (`XXXX XXXXX 0101`); el DPI completo nunca se guarda en `sales`. El comprobante muestra el **DPI completo** (D-28): se descifra desde `billing_parties` al consultar la venta, y ese acceso se registra en la bitácora. Las ventas anteriores a este cambio se muestran como CF.
