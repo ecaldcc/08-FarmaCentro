@@ -27,6 +27,11 @@
 - El entregable (control 8.15) pide conservar 12 meses (lo que implica purgar lo más antiguo). CLAUDE.md pide una colección de solo inserción y el usuario de la API no puede borrar. Además, purgar el inicio de la cadena rompería la verificación salvo que se guarde un "punto de partida" firmado.
 - Supuesto: en el prototipo no se purga nada y la retención queda "solo documentada". **¿De acuerdo?**
 
+### C-07. Repositorio público y credenciales de prueba
+- CLAUDE.md pide las credenciales de prueba en `docs/credenciales-prueba.md`, pero el repositorio 08-FarmaCentro será **público**: cualquiera vería la contraseña de demostración.
+- Mitigación implementada (sin cambiar CLAUDE.md): la contraseña pública solo sirve en desarrollo local; en producción `scripts/seed.ts` exige `SEED_PASSWORD` y obliga a cada usuario a cambiar su contraseña; el segundo factor llega a correos que el atacante no controla. Las credenciales del ambiente desplegado se entregan por un canal privado.
+- **Pregunta**: ¿están de acuerdo, o prefieren repositorio privado con el grupo auditor como colaborador?
+
 ### C-06. Detalles del entregable que el diseño no refleja literalmente
 - Tabla 2 lista "plantillas biométricas" como activo: con WebAuthn **no** se guardan plantillas en el servidor (solo la clave pública); la huella nunca sale del dispositivo.
 - Tabla 12 (8.15) habla de registrar "equipo": el diseño registra IP y user agent, no una identidad de equipo.
@@ -39,7 +44,7 @@
 | **D-01** | Despliegue para el grupo auditor | Instalan el sistema **en su máquina** (`localhost`), con Express sirviendo cliente y API en el mismo origen. No hay servidor público. | ¿El grupo auditor lo usará local o necesitan una URL pública con HTTPS? Si es pública: ¿qué hosting? (debe servir cliente y API en el mismo dominio). |
 | **D-02** | Navegador soportado | Chrome o Edge en Windows 11 con Windows Hello. | ¿Confirmamos? ¿Los auditores tienen lector de huella o Windows Hello? Si no, solo podrán usar el código por correo. |
 | **D-03** | Correo para re-autenticación | `STEP_UP_ALLOW_EMAIL=true` en desarrollo (para quien no tenga lector) y recomendación de `false` en la demostración: las operaciones sensibles solo con huella, como dice el entregable. | ¿Qué valor usamos en la entrega? Si es `false`, un usuario sin huella registrada no podrá anular, ajustar, despachar controlados ni cambiar roles. |
-| **D-04** | Versión de Node y TypeScript | **Node 24 LTS** (el Node 20.19.4 instalado terminó su soporte en abril de 2026 y Vitest 5 y React Router 8 exigen 22+). **TypeScript 6.0.3**, no 7.0.2, porque `typescript-eslint` aún no soporta la 7. | ¿Todos los integrantes pueden instalar Node 24? |
+| **D-04** | Versión de Node y TypeScript | ✅ **Resuelta (24/09/2026):** Node **22.16.0** (ya instalado; el 20 está sin soporte), **React Router 7.18.4** en lugar de la 8 (exige Node 22.22+) y **TypeScript 6.0.3** (`typescript-eslint` aún no soporta la 7). | — |
 | **D-05** | Librería de bcrypt | `bcrypt` 6.0.0 (nativa, más rápida). Si la compilación falla en alguna máquina Windows, usar `bcryptjs` 3.0.3 (JavaScript puro, mismo formato de hash). | ¿Alguna preferencia? |
 | **D-06** | Servidor de correo | **Mailpit** local (SMTP de pruebas con bandeja web en `localhost:8025`): no manda correos reales y el auditor puede ver los códigos. | ¿Mailpit (requiere Docker o el ejecutable), Ethereal, o una cuenta real (Gmail con contraseña de aplicación)? |
 | **D-07** | Quién anula ventas y en qué plazo | Solo el **Regente**, con re-autenticación y motivo, y solo ventas **del mismo día**. El Cajero no anula. | ¿Solo el Regente? ¿El Cajero puede anular sus propias ventas con 2FA? ¿Qué plazo? |

@@ -6,7 +6,7 @@
 
 - Un solo repositorio con **npm workspaces** (`client`, `server`) y **un solo `package-lock.json` en la raíz**, versionado.
 - `scripts/` no es un workspace: sus archivos se ejecutan con `tsx` desde la raíz y reutilizan los modelos de `server/src/models` (así la siembra y la API usan los mismos esquemas).
-- Entorno: **Node.js 24 LTS** (archivo `.nvmrc`). El Node 20.19.4 instalado en esta máquina terminó su soporte en abril de 2026 y no es compatible con Vitest 5 ni con React Router 8 (ver D-04).
+- Entorno: **Node.js 22.16.0** (archivo `.nvmrc`, decisión D-04 resuelta). Las variables de entorno se cargan con `--env-file` / `process.loadEnvFile` de Node, sin `dotenv`.
 - `.npmrc` con `save-exact=true`: las versiones quedan fijas (sin `^`), así cada actualización es un cambio explícito y revisable.
 
 ```text
@@ -60,7 +60,7 @@ Farmacentro/
 │       │   ├── audit/          # U1, U2
 │       │   ├── reports/        # A4, B8, R13, U3
 │       │   └── errors/         # C8, C9
-│       ├── styles/             # CSS Modules (sin CSS-in-JS que inyecte <style>, por la CSP)
+│       ├── styles/             # app.css global servido como archivo (sin CSS-in-JS que inyecte <style>, por la CSP)
 │       └── utils/              # format.ts (quetzales, fechas locales), mask.ts
 │
 ├── server/
@@ -147,6 +147,9 @@ Farmacentro/
 │   ├── .env.example            # MONGODB_URI_ADMIN, MONGODB_URI_API, MONGODB_URI_AUDIT_READER
 │   ├── tsconfig.json
 │   ├── generate-keys.ts        # imprime claves aleatorias para server/.env (no las guarda)
+│   ├── dev-memory-db.ts        # MongoDB en memoria para desarrollo sin Atlas
+│   ├── dev-mail.ts             # SMTP de desarrollo que muestra los correos en consola
+│   ├── audit-report.ts         # npm audit + evidencia
 │   ├── setup-db.ts             # crea colecciones, índices y TTL con el usuario migrator; registro génesis
 │   ├── seed.ts                 # datos ficticios y un usuario por rol
 │   ├── check-db-privileges.ts  # evidencia: el usuario de la API no puede update/delete en audit_logs
@@ -191,7 +194,6 @@ Versiones consultadas en el registro de npm (`npm view`) el 24/09/2026. Todavía
 | `bcrypt` | 6.0.0 | Hash de contraseñas, costo 12 (alternativa `bcryptjs` 3.0.3, ver D-05) | 5.17 |
 | `@simplewebauthn/server` | 14.0.2 | Generar y verificar desafíos WebAuthn | 8.5 |
 | `nodemailer` | 10.0.10 | Envío de códigos y avisos | 8.5, 8.16 |
-| `dotenv` | 18.0.3 | Carga de `.env` | 8.24 (secretos fuera del código) |
 | `pino` | 10.3.1 | Log técnico estructurado con redacción de secretos | 8.15 |
 | `pino-http` | 11.0.0 | Log por petición con `requestId` | 8.15 |
 | `csv-stringify` | 6.8.3 | Generación de CSV para exportaciones | Reportes |
@@ -221,7 +223,7 @@ Sin dependencia extra para criptografía: AES-256-GCM, HMAC, SHA-256 y números 
 |---|---|---|---|
 | `react` | 19.3.0 | prod | Interfaz |
 | `react-dom` | 19.3.0 | prod | Renderizado |
-| `react-router` | 8.4.0 | prod | Navegación por rol (modo declarativo, sin SSR) |
+| `react-router` | 7.18.4 | prod | Navegación por rol (modo declarativo, sin SSR). La 8 exige Node 22.22+ (D-04) |
 | `@simplewebauthn/browser` | 14.0.0 | prod | Llamar a WebAuthn desde el navegador (misma versión mayor que el servidor) |
 | `vite` | 8.3.1 | dev | Servidor de desarrollo con proxy y compilación |
 | `@vitejs/plugin-react` | 6.1.1 | dev | Soporte de React en Vite |

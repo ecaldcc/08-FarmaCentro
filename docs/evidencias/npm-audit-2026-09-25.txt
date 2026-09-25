@@ -1,0 +1,7 @@
+npm audit — 2026-09-25T01:42:41.615Z
+Dependencias analizadas: 460
+Críticas: 0
+Altas: 0
+Moderadas: 0
+Bajas: 0
+Informativas: 0
