@@ -54,6 +54,7 @@ export function SalesPage({ mode }: { mode: 'all' | 'own' }) {
               <tr>
                 <th>Venta</th>
                 <th>Fecha</th>
+                <th>Cliente</th>
                 <th>Cajero</th>
                 <th>Pago</th>
                 <th>Total</th>
@@ -69,6 +70,7 @@ export function SalesPage({ mode }: { mode: 'all' | 'own' }) {
                   <td>
                     <DateTime value={s.createdAt} />
                   </td>
+                  <td>{s.customerName ?? 'Consumidor final'}</td>
                   <td>{s.cashierUsername ?? '—'}</td>
                   <td>{s.payment.method === 'cash' ? 'Efectivo' : 'Tarjeta (simulada)'}</td>
                   <td>

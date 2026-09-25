@@ -120,6 +120,7 @@ export interface Sale {
   cashierId: string;
   cashierUsername: string | null;
   customerId: string | null;
+  customerName: string | null;
   items: SaleItem[];
   totalCents: number;
   payment: {

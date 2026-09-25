@@ -54,6 +54,8 @@ export function SaleDetailPage() {
       )}
       <section className="card">
         <dl className="details inline">
+          <dt>Cliente</dt>
+          <dd>{sale.customerName ?? 'Consumidor final'}</dd>
           <dt>Cajero</dt>
           <dd>{sale.cashierUsername ?? '—'}</dd>
           <dt>Estado</dt>

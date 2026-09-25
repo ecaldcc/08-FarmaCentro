@@ -14,7 +14,7 @@ import type {
 } from '../validation/prescription.schemas.js';
 import { appendAudit, runAuditedTransaction, type AuditContext } from './audit.service.js';
 import { decryptField, decryptJson, encryptField, encryptJson } from './crypto.service.js';
-import { allocateStock, loadProducts, persistSale, saleDto } from './sale.service.js';
+import { allocateStock, loadProducts, persistSale, presentSales } from './sale.service.js';
 
 const COLLECTION = 'prescriptions';
 /** Prescription validity for dispensing (decision D-16). */
@@ -289,7 +289,8 @@ export async function dispensePrescription(
         stepUpMethod,
       },
     });
-    return { dispensationId: String(dispensationId), sale: saleDto(sale) };
+    return { dispensationId: String(dispensationId), sale };
   });
-  return result;
+  const [sale] = await presentSales([result.sale]);
+  return { dispensationId: result.dispensationId, sale: sale! };
 }

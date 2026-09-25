@@ -30,6 +30,8 @@ export function ReceiptPage() {
         <dd>{sale.saleNumber}</dd>
         <dt>Fecha</dt>
         <dd>{formatDateTime(sale.createdAt)}</dd>
+        <dt>Cliente</dt>
+        <dd>{sale.customerName ?? 'Consumidor final'}</dd>
         <dt>Atendió</dt>
         <dd>{sale.cashierUsername ?? '—'}</dd>
       </dl>

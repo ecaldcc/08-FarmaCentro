@@ -29,13 +29,19 @@ function simulatedAuthorizationRef(): string {
   return ref;
 }
 
-export function saleDto(sale: ISale, names: Map<string, string> = new Map()) {
+export function saleDto(
+  sale: ISale,
+  names: Map<string, string> = new Map(),
+  customers: Map<string, string> = new Map(),
+) {
   return {
     id: String(sale._id),
     saleNumber: sale.saleNumber,
     cashierId: String(sale.cashierId),
     cashierUsername: names.get(String(sale.cashierId)) ?? null,
     customerId: sale.customerId ? String(sale.customerId) : null,
+    // Only the name is shown on the receipt; contact data stays encrypted and is not returned here.
+    customerName: sale.customerId ? (customers.get(String(sale.customerId)) ?? null) : null,
     items: sale.items.map((i) => ({
       productId: String(i.productId),
       lotId: String(i.lotId),
@@ -62,6 +68,21 @@ export function saleDto(sale: ISale, names: Map<string, string> = new Map()) {
       : null,
     createdAt: sale.createdAt,
   };
+}
+
+async function customerNames(ids: Types.ObjectId[]): Promise<Map<string, string>> {
+  if (ids.length === 0) return new Map();
+  const customers = await Customer.find({ _id: op({ $in: ids }) }, { fullName: 1 }).lean();
+  return new Map(customers.map((c) => [String(c._id), c.fullName]));
+}
+
+/** DTOs with cashier, voider and customer names resolved. */
+export async function presentSales(sales: ISale[]) {
+  const [names, customers] = await Promise.all([
+    usernames(sales.flatMap((s) => [s.cashierId, ...(s.void ? [s.void.voidedBy] : [])])),
+    customerNames(sales.flatMap((s) => (s.customerId ? [s.customerId] : []))),
+  ]);
+  return sales.map((s) => saleDto(s, names, customers));
 }
 
 async function usernames(ids: Types.ObjectId[]): Promise<Map<string, string>> {
@@ -262,7 +283,8 @@ export async function createSale(
     });
     return created;
   });
-  return saleDto(sale);
+  const [dto] = await presentSales([sale]);
+  return dto!;
 }
 
 export async function listSales(query: ListSalesInput, actor: { id: string; role: Role }) {
@@ -290,8 +312,7 @@ export async function listSales(query: ListSalesInput, actor: { id: string; role
       .lean(),
     Sale.countDocuments(filter),
   ]);
-  const names = await usernames(items.flatMap((s) => [s.cashierId, ...(s.void ? [s.void.voidedBy] : [])]));
-  return { items: items.map((s) => saleDto(s, names)), page: query.page, pageSize: query.pageSize, total };
+  return { items: await presentSales(items), page: query.page, pageSize: query.pageSize, total };
 }
 
 export async function getSale(id: string, actor: { id: string; role: Role }) {
@@ -300,8 +321,8 @@ export async function getSale(id: string, actor: { id: string; role: Role }) {
   if (!sale || (actor.role === 'cajero' && String(sale.cashierId) !== actor.id)) {
     throw Errors.notFound();
   }
-  const names = await usernames([sale.cashierId, ...(sale.void ? [sale.void.voidedBy] : [])]);
-  return saleDto(sale, names);
+  const [dto] = await presentSales([sale]);
+  return dto!;
 }
 
 /**
@@ -382,6 +403,6 @@ export async function voidSale(id: string, reason: string, actorId: string, ctx:
     });
     return voided;
   });
-  const names = await usernames([updated.cashierId, new Types.ObjectId(actorId)]);
-  return saleDto(updated, names);
+  const [dto] = await presentSales([updated]);
+  return dto!;
 }

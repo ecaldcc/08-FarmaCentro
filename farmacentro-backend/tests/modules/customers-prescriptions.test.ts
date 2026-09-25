@@ -59,12 +59,17 @@ describe('loyalty customers', () => {
     await createLot(product._id, 10, 100);
     const client = await loginWithEmail(cajero);
     const customer = await client.post('/api/customers', { fullName: 'Ana Gómez', phone: '33332222', consent });
-    await client.post('/api/sales', {
+    const sale = await client.post('/api/sales', {
       customerId: customer.body.id,
       items: [{ productId: String(product._id), quantity: 3 }],
       payment: { method: 'card_simulated' },
     });
     expect((await Customer.findById(customer.body.id).lean())?.pointsBalance).toBe(15);
+    // The receipt shows the customer's name (and never the encrypted contact data).
+    expect(sale.body.customerName).toBe('Ana Gómez');
+    const receipt = await client.get(`/api/sales/${sale.body.id}`);
+    expect(receipt.body.customerName).toBe('Ana Gómez');
+    expect(JSON.stringify(receipt.body)).not.toContain('33332222');
 
     const regenteClient = await loginWithEmail(regente);
     const withdrawn = await regenteClient.post(`/api/customers/${customer.body.id}/consent-withdrawal`, {
