@@ -3,7 +3,7 @@
 # they never live in this repository. Guide: docs/manual-instalacion.md §5.
 services:
   - type: web
-    name: farmacentro-api
+    name: zero8-farmacentro-backend
     runtime: node
     plan: free
     region: virginia

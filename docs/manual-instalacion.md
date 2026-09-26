@@ -107,16 +107,16 @@ Atlas M0 no ofrece respaldos automáticos: usa `npm run backup` y `npm run resto
 ## 5. Despliegue: Netlify (frontend) + Render (backend) + Atlas
 
 ```text
-Navegador ──HTTPS──> Netlify (farmacentro-xxx.netlify.app)
+Navegador ──HTTPS──> Netlify (farmacentro.netlify.app)
                        ├── /            → Farmacentro-Frontend/dist
-                       └── /api/*       → proxy → Render (farmacentro-api.onrender.com) ──TLS──> MongoDB Atlas
+                       └── /api/*       → proxy → Render (zero8-farmacentro-backend.onrender.com) ──TLS──> MongoDB Atlas
 ```
 
 Netlify reenvía `/api/*` a Render. Así el navegador solo habla con el dominio de Netlify: la cookie de sesión sigue siendo `SameSite=Strict`, la CSP `'self'` y la huella (WebAuthn) usa el dominio de Netlify. Si el navegador llamara directo a Render, la cookie no viajaría y el login no funcionaría.
 
 ### 5.1 Antes de empezar
 
-- **Nombre del sitio de Netlify:** decide uno libre, por ejemplo `farmacentro-umg`. La URL será `https://farmacentro-umg.netlify.app`; úsala en todos los pasos siguientes.
+- **Nombre del sitio de Netlify:** decide uno libre, por ejemplo `farmacentro`. La URL será `https://farmacentro.netlify.app`; úsala en todos los pasos siguientes.
 - **Brevo** (correo): crea una cuenta gratuita en brevo.com, verifica un **remitente** en *Senders, Domains & Dedicated IPs → Senders* (puede ser un Gmail del equipo) y genera una **API key** en *SMTP & API → API Keys*. Render gratis bloquea el SMTP, por eso los códigos salen por la API de Brevo.
 - **Claves:** en `farmacentro-backend`, ejecuta `npm run generate-keys`. Esas mismas claves van en Render y en tu `.env.production`: si no coinciden, la API no podrá descifrar los datos cargados desde tu PC.
 
@@ -140,32 +140,32 @@ Netlify reenvía `/api/*` a Render. Así el navegador solo habla con el dominio 
 
 ### 5.3 Backend en Render
 
-1. En Render: **New → Blueprint**, conecta el repositorio `ecaldcc/08-FarmaCentro` (rama `main`). Render lee `render.yaml` de la raíz: servicio `farmacentro-api`, carpeta `farmacentro-backend`, build `npm ci --include=dev && npm run build`, arranque `npm start` y chequeo en `/api/health`.
+1. En Render: **New → Blueprint**, conecta el repositorio `ecaldcc/08-FarmaCentro` (rama `main`). Render lee `render.yaml` de la raíz: servicio `zero8-farmacentro-backend`, carpeta `farmacentro-backend`, build `npm ci --include=dev && npm run build`, arranque `npm start` y chequeo en `/api/health`.
 2. Render pide los valores marcados como secretos. Usa los mismos de tu `.env.production`:
 
 | Variable | Valor |
 |---|---|
-| `CLIENT_ORIGIN` | `https://farmacentro-umg.netlify.app` |
-| `RP_ID` | `farmacentro-umg.netlify.app` |
+| `CLIENT_ORIGIN` | `https://farmacentro.netlify.app` |
+| `RP_ID` | `farmacentro.netlify.app` |
 | `MONGODB_URI` | Cadena de Atlas del usuario `farmacentro_api` |
 | `SESSION_SECRET`, `DATA_ENC_KEY_V1`, `BLIND_INDEX_KEY`, `OTP_HMAC_KEY` | Las de `npm run generate-keys` |
 | `BREVO_API_KEY` | La API key de Brevo |
 | `MAIL_FROM` | `FarmaCentro <remitente-verificado@gmail.com>` |
 
    Los demás valores ya vienen en `render.yaml`: `NODE_ENV=production`, `MAIL_TRANSPORT=brevo`, `TRUST_PROXY=2`, `STEP_UP_ALLOW_EMAIL=true` (decisión D-03), Node 22.16.0.
-3. Cuando termine el despliegue, abre `https://farmacentro-api.onrender.com/api/health`: debe responder `{"status":"ok"}`. Si Render asignó otra URL (por ejemplo con un sufijo), cópiala para el paso siguiente.
+3. Cuando termine el despliegue, abre `https://zero8-farmacentro-backend.onrender.com/api/health`: debe responder `{"status":"ok"}`. Si Render asignó otra URL (por ejemplo con un sufijo), cópiala para el paso siguiente.
 
 ### 5.4 Frontend en Netlify
 
-1. Si la URL de Render no es `farmacentro-api.onrender.com`, cámbiala en `Farmacentro-Frontend/netlify.toml` (regla `/api/*`) y sube el cambio.
+1. Si la URL de Render no es `zero8-farmacentro-backend.onrender.com`, cámbiala en `Farmacentro-Frontend/netlify.toml` (regla `/api/*`) y sube el cambio.
 2. En Netlify: **Add new site → Import an existing project**, elige el repositorio y configura **Base directory** = `Farmacentro-Frontend`. El comando (`npm run build`), la carpeta publicada (`dist`), la versión de Node, el proxy a Render y las cabeceras de seguridad (CSP, HSTS) se leen de `netlify.toml`.
-3. En **Site configuration → Change site name**, pon el nombre elegido en 5.1 (`farmacentro-umg`).
-4. Abre `https://farmacentro-umg.netlify.app`, inicia sesión con un usuario de prueba y confirma que el código llega al buzón de `SEED_EMAIL`.
+3. En **Site configuration → Change site name**, pon el nombre elegido en 5.1 (`farmacentro`).
+4. Abre `https://farmacentro.netlify.app`, inicia sesión con un usuario de prueba y confirma que el código llega al buzón de `SEED_EMAIL`.
 5. Pega la URL en la sección **Despliegue** del `README.md`.
 
 ### 5.5 Qué tener en cuenta
 
-- **Render gratis se duerme** tras 15 minutos sin tráfico y tarda de 30 a 60 segundos en despertar. El proxy de Netlify espera unos 26 segundos, así que la primera petición puede fallar: abre antes `https://farmacentro-api.onrender.com/api/health` y espera la respuesta.
+- **Render gratis se duerme** tras 15 minutos sin tráfico y tarda de 30 a 60 segundos en despertar. El proxy de Netlify espera unos 26 segundos, así que la primera petición puede fallar: abre antes `https://zero8-farmacentro-backend.onrender.com/api/health` y espera la respuesta.
 - **IP en la bitácora:** con `TRUST_PROXY=2` la API toma la IP del navegador (Netlify y el balanceador de Render son los dos saltos de confianza). Verifícalo en la primera prueba mirando la bitácora.
 - **Credenciales del grupo auditor:** se entregan por un canal privado, nunca en el repositorio, junto con el ancla de la bitácora (`npm run verify-audit:prod`).
 

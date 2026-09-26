@@ -13,7 +13,7 @@
 # Replace the host if Render assigned a different URL to the service.
 [[redirects]]
   from = "/api/*"
-  to = "https://farmacentro-api.onrender.com/api/:splat"
+  to = "https://zero8-farmacentro-backend.onrender.com/api/:splat"
   status = 200
   force = true
 
