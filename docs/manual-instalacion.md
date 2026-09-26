@@ -90,6 +90,18 @@ Abre http://localhost:5173. Vite reenvía `/api` al backend, así que el navegad
 
 La cadena de conexión de cada usuario es la que muestra Atlas en **Connect → Drivers**, con `/farmacentro` como base de datos antes del `?`.
 
+**Alternativa por script (pasos 3 y 4 automáticos):**
+
+1. En Atlas, entra a **Project → Access Manager → Service Accounts → Create Service Account**, con el rol **Project Owner**. Copia el *Client ID* y el *Client Secret* (el secreto se muestra una sola vez) y agrega tu IP en la lista de acceso a la API del service account.
+2. Copia el *Project ID* (en **Project Settings**).
+3. Pon `ATLAS_CLIENT_ID`, `ATLAS_CLIENT_SECRET` y `ATLAS_PROJECT_ID` en `farmacentro-backend/.env.production`.
+4. Ejecuta en `farmacentro-backend`:
+   ```bash
+   npm run atlas:provision -- --add-my-ip
+   ```
+
+El script crea (o corrige) los roles `farmacentroApi` y `auditReader` para que coincidan con `API_ROLE_PRIVILEGES` del código, crea los tres usuarios con contraseñas aleatorias limitadas al clúster, agrega tu IP y escribe las cuatro cadenas de conexión en `.env.production` sin mostrarlas. Si un usuario ya existía, solo verifica sus roles; con `--rotate-passwords` también le renueva la contraseña y actualiza su cadena.
+
 Atlas M0 no ofrece respaldos automáticos: usa `npm run backup` y `npm run restore-test -- backups/<archivo>.bak`.
 
 ## 5. Despliegue: Netlify (frontend) + Render (backend) + Atlas

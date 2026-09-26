@@ -24,7 +24,8 @@
     "setup-db:prod": "tsx scripts/setup-db.ts --env=.env.production",
     "seed:prod": "tsx scripts/seed.ts --env=.env.production",
     "check-db-privileges:prod": "tsx scripts/check-db-privileges.ts --env=.env.production",
-    "verify-audit:prod": "tsx scripts/verify-audit-chain.ts --env=.env.production"
+    "verify-audit:prod": "tsx scripts/verify-audit-chain.ts --env=.env.production",
+    "atlas:provision": "tsx scripts/atlas-provision.ts --env=.env.production"
   },
   "dependencies": {
     "@simplewebauthn/server": "14.0.2",
