@@ -8,14 +8,22 @@ Prototipo académico del curso **Seguridad y Auditoría de Sistemas** (Universid
 
 ## Despliegue
 
+<p align="center"><strong>APLICACIÓN DESPLEGADA</strong></p>
+
+<h1 align="center"><a href="https://farmacentro.netlify.app">https://farmacentro.netlify.app</a></h1>
+
+<p align="center">Abrir en Chrome o Edge · Las credenciales de producción se entregan por un canal privado</p>
+
 | | |
 |---|---|
-| **Aplicación en línea** | **Pendiente de despliegue** — pegar aquí el enlace de Netlify |
+| **Aplicación en línea** | [https://farmacentro.netlify.app](https://farmacentro.netlify.app) |
 | **Frontend** | Netlify (`Farmacentro-Frontend`, configurado en `netlify.toml`) |
-| **Backend (API)** | Render (`farmacentro-backend`, configurado en `render.yaml`) |
-| **Base de datos** | MongoDB Atlas M0 (AWS N. Virginia) |
+| **Backend (API)** | Render (`farmacentro-backend`) · se accede a través de `https://farmacentro.netlify.app/api` |
+| **Base de datos** | MongoDB Atlas M0 (base `farmacentro`) |
 | **Repositorio** | [github.com/ecaldcc/08-FarmaCentro](https://github.com/ecaldcc/08-FarmaCentro) |
-| **Estado** | Configuración lista · pendiente de crear los servicios y entregar al grupo auditor |
+| **Estado** | Desplegada · en verificación antes de la entrega al grupo auditor |
+
+> **Primer acceso del día:** el backend está en el plan gratuito de Render y se duerme tras 15 minutos sin uso. Si la primera carga tarda o falla, espera un minuto y vuelve a intentar.
 
 > **Cómo está armado:** Netlify sirve el cliente y reenvía `/api/*` a Render, así el navegador solo ve un dominio con HTTPS: la cookie de sesión sigue siendo `SameSite=Strict` y la huella (WebAuthn) funciona. Los correos salen por la API de Brevo, porque Render gratis bloquea el SMTP. Paso a paso en [docs/manual-instalacion.md](docs/manual-instalacion.md#5-despliegue-netlify-frontend--render-backend--atlas).
 
