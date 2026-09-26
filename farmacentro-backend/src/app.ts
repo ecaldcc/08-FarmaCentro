@@ -9,6 +9,7 @@ import { logger } from './config/logger.js';
 import { sessionMiddleware } from './config/session.js';
 import { loadUser } from './middlewares/auth.js';
 import { requestId, requireJson, verifyOrigin } from './middlewares/basic.js';
+import { netlifyProxy } from './middlewares/netlifyProxy.js';
 import { errorHandler, notFound } from './middlewares/errorHandler.js';
 import { apiLimiter } from './middlewares/rateLimits.js';
 import { apiRouter } from './routes/index.js';
@@ -50,6 +51,7 @@ export function createApp(): Express {
   app.use(requestId);
   app.use(pinoHttp({ logger, customProps: (req) => ({ requestId: (req as express.Request).requestId }) }));
 
+  app.use('/api', netlifyProxy);
   app.use('/api', verifyOrigin);
   app.use(
     '/api',

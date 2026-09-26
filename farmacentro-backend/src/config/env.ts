@@ -38,6 +38,8 @@ export const EnvSchema = z
     STEP_UP_ALLOW_EMAIL: boolFromString.default(true),
     OTP_RESEND_SECONDS: z.coerce.number().int().min(0).max(600).default(60),
     RATE_LIMIT_FACTOR: z.coerce.number().int().min(1).max(1000).default(1),
+    // Shared secret of the signed Netlify proxy (netlify.toml `signed = "API_SIGNATURE_TOKEN"`).
+    NETLIFY_PROXY_SECRET: z.string().min(32).optional(),
     SERVE_CLIENT: boolFromString.default(false),
     CLIENT_DIST: z.string().optional(),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),

@@ -5,7 +5,7 @@ import type { AuditContext } from '../services/audit.service.js';
 export function auditContext(req: Request): AuditContext {
   return {
     actor: req.user ? { userId: req.user.id, username: req.user.username, role: req.user.role } : null,
-    ip: req.ip ?? null,
+    ip: req.clientIp ?? req.ip ?? null,
     userAgent: req.get('user-agent') ?? null,
     requestId: req.requestId ?? null,
   };

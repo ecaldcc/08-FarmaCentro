@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { env } from '../config/env.js';
-import rateLimit, { type Options } from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator, type Options } from 'express-rate-limit';
 import { appendAudit } from '../services/audit.service.js';
 import { Errors } from '../utils/httpError.js';
 import { auditContext } from '../utils/requestContext.js';
@@ -21,6 +21,8 @@ function limiter(windowMinutes: number, limit: number) {
     limit: limit * env.RATE_LIMIT_FACTOR,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
+    // Per real client IP (behind the signed Netlify proxy every request arrives from Netlify/Cloudflare).
+    keyGenerator: (req) => ipKeyGenerator(req.clientIp ?? req.ip ?? 'unknown'),
     handler: onLimitReached,
   });
 }

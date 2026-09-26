@@ -8,6 +8,8 @@ export const logger = pino({
     paths: [
       'req.headers.cookie',
       'req.headers.authorization',
+      'req.headers["x-nf-sign"]',
+      'req.headers["x-nf-netlify-proxy"]',
       'res.headers["set-cookie"]',
       '*.password',
       '*.currentPassword',

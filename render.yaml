@@ -21,7 +21,7 @@ services:
         value: production
       - key: MONGOMS_DISABLE_POSTINSTALL
         value: "1"
-      # Browser → Netlify → Cloudflare (Render edge) → Render internal proxy → API: 4 trusted hops for the client IP.
+      # Proxies in front of the API (for HTTPS detection). The client IP comes from the signed Netlify header.
       - key: TRUST_PROXY
         value: "4"
       - key: CLIENT_ORIGIN
@@ -51,6 +51,9 @@ services:
         sync: false
       - key: STEP_UP_ALLOW_EMAIL
         value: "true"
+      # Same value as API_SIGNATURE_TOKEN in Netlify (signed proxy).
+      - key: NETLIFY_PROXY_SECRET
+        sync: false
       - key: SERVE_CLIENT
         value: "false"
       - key: LOG_LEVEL

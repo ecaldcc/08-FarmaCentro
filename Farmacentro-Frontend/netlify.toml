@@ -16,13 +16,9 @@
   to = "https://zero8-farmacentro-backend.onrender.com/api/:splat"
   status = 200
   force = true
-
-# TEMPORARY diagnostic (to be removed): shows which X-Forwarded-For Netlify sends to a proxied origin.
-[[redirects]]
-  from = "/__diag-headers"
-  to = "https://postman-echo.com/headers"
-  status = 200
-  force = true
+  # Netlify signs each proxied request (x-nf-sign, HS256) with this secret; the API rejects
+  # unsigned calls and only then trusts x-nf-client-connection-ip as the client IP.
+  signed = "API_SIGNATURE_TOKEN"
 
 # Single-page application: every other route is handled by React Router.
 [[redirects]]

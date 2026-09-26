@@ -47,6 +47,8 @@ declare global {
   namespace Express {
     interface Request {
       requestId: string;
+      /** Client IP from a verified proxy header (signed Netlify proxy); falls back to req.ip. */
+      clientIp?: string;
       user?: AuthUser;
       validated: {
         params: unknown;

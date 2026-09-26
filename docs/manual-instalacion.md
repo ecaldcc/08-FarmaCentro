@@ -166,7 +166,7 @@ Netlify reenvía `/api/*` a Render. Así el navegador solo habla con el dominio 
 ### 5.5 Qué tener en cuenta
 
 - **Render gratis se duerme** tras 15 minutos sin tráfico y tarda de 30 a 60 segundos en despertar. El proxy de Netlify espera unos 26 segundos, así que la primera petición puede fallar: abre antes `https://zero8-farmacentro-backend.onrender.com/api/health` y espera la respuesta.
-- **IP en la bitácora:** con `TRUST_PROXY=4` la API toma la IP del navegador. Entre el navegador y la API hay cuatro saltos de confianza: Netlify, Cloudflare (al frente de Render) y dos proxies internos de Render. Para comprobarlo, compara la IP que registra un intento de login fallido con la IP pública del equipo.
+- **IP en la bitácora y proxy firmado:** Netlify no envía la IP del usuario en `X-Forwarded-For`, sino en `x-nf-client-connection-ip`. La regla `/api/*` de `netlify.toml` tiene `signed = "API_SIGNATURE_TOKEN"`: Netlify firma cada petición con ese secreto y la API (variable `NETLIFY_PROXY_SECRET`, con el mismo valor) rechaza las que no vienen firmadas. Configura primero `API_SIGNATURE_TOKEN` en Netlify (*Site configuration → Environment variables*, con el alcance **Runtime** incluido) y después `NETLIFY_PROXY_SECRET` en Render.
 - **Credenciales del grupo auditor:** se entregan por un canal privado, nunca en el repositorio, junto con el ancla de la bitácora (`npm run verify-audit:prod`).
 
 ## 6. Verificación
