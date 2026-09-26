@@ -8,6 +8,7 @@ import { op } from '../utils/trusted.js';
 import type { CreateUserInput, ListUsersInput, UpdateUserInput } from '../validation/user.schemas.js';
 import { appendAudit, runAuditedTransaction, type AuditContext } from './audit.service.js';
 import { isLocked } from './lockout.service.js';
+import { sendInvitation, temporaryPasswordExpiry } from './invitation.service.js';
 import { notifyUser } from './mail.service.js';
 import { generateTemporaryPassword, hashPassword } from './password.service.js';
 
@@ -25,6 +26,7 @@ function toDto(user: LeanUser, credentialCount: number) {
     lockedUntil: user.lockedUntil,
     hasWebAuthn: credentialCount > 0,
     mustChangePassword: user.mustChangePassword,
+    temporaryPasswordExpiresAt: user.mustChangePassword ? (user.temporaryPasswordExpiresAt ?? null) : null,
     lastLoginAt: user.lastLoginAt,
     createdAt: user.createdAt,
   };
@@ -90,6 +92,7 @@ export async function createUser(data: CreateUserInput, actorId: string, ctx: Au
   }
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = await hashPassword(temporaryPassword);
+  const expiresAt = temporaryPasswordExpiry();
   const user = await runAuditedTransaction(ctx, async ({ session, audit }) => {
     const [created] = await User.create(
       [
@@ -98,6 +101,7 @@ export async function createUser(data: CreateUserInput, actorId: string, ctx: Au
           passwordHash,
           passwordChangedAt: new Date(),
           mustChangePassword: true,
+          temporaryPasswordExpiresAt: expiresAt,
           createdBy: new Types.ObjectId(actorId),
         },
       ],
@@ -113,9 +117,15 @@ export async function createUser(data: CreateUserInput, actorId: string, ctx: Au
     });
     return created;
   });
-  const dto = await getUser(String(user._id));
-  // The temporary password is returned once and never logged or audited.
-  return { user: dto, temporaryPassword };
+  // The temporary password is e-mailed to the employee only: it is not returned to the Administrator.
+  const invitation = await sendInvitation(
+    { id: String(user._id), username: user.username, fullName: user.fullName, email: user.email },
+    temporaryPassword,
+    expiresAt,
+    'created',
+    ctx,
+  );
+  return { user: await getUser(String(user._id)), invitation };
 }
 
 export async function updateUser(id: string, data: UpdateUserInput, actorId: string, ctx: AuditContext) {
@@ -222,6 +232,7 @@ export async function resetPassword(id: string, reason: string, actorId: string,
     throw Errors.conflict('Usa "Cambiar contraseña" en Mi cuenta para tu propia contraseña.');
   }
   const temporaryPassword = generateTemporaryPassword();
+  const expiresAt = temporaryPasswordExpiry();
   await User.updateOne(
     { _id: target._id },
     {
@@ -229,6 +240,7 @@ export async function resetPassword(id: string, reason: string, actorId: string,
         passwordHash: await hashPassword(temporaryPassword),
         passwordChangedAt: new Date(),
         mustChangePassword: true,
+        temporaryPasswordExpiresAt: expiresAt,
         lockedUntil: null,
         failedLoginCount: 0,
         updatedBy: new Types.ObjectId(actorId),
@@ -242,12 +254,14 @@ export async function resetPassword(id: string, reason: string, actorId: string,
     entityId: target._id,
     details: { reason, stepUpMethod },
   });
-  await notifyUser(
-    target.email,
-    'contraseña restablecida',
-    'El Administrador restableció tu contraseña. Deberás cambiarla al iniciar sesión.',
+  const invitation = await sendInvitation(
+    { id: String(target._id), username: target.username, fullName: target.fullName, email: target.email },
+    temporaryPassword,
+    expiresAt,
+    'reset',
+    ctx,
   );
-  return { temporaryPassword };
+  return { invitation };
 }
 
 export async function revokeUserCredential(

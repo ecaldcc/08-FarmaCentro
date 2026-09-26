@@ -34,7 +34,7 @@
 | Id | Pantalla | Ruta | Descripción | Endpoints |
 |---|---|---|---|---|
 | A1 | Usuarios (inicio) | `/usuarios` | Tabla con filtros por rol y estado; indicadores de bloqueado y de huella registrada. | 18 |
-| A2 | Nuevo usuario | `/usuarios/nuevo` | Formulario + re-autenticación. Al guardar, muestra la contraseña temporal **una sola vez** con aviso "cópiala ahora". | 20 |
+| A2 | Nuevo usuario | `/usuarios/nuevo` | Formulario (nombre de usuario, nombre del empleado, correo del empleado y rol) + re-autenticación. Al guardar se envía la invitación al correo del empleado; la pantalla solo confirma el envío (correo enmascarado y vencimiento), **nunca muestra la contraseña**. | 20 |
 | A3 | Detalle de usuario | `/usuarios/:id` | Datos, huellas, y acciones: editar, cambiar rol, deshabilitar/habilitar, desbloquear, restablecer contraseña, revocar huella. Cada acción pide motivo y re-autenticación. Los botones sobre la propia cuenta aparecen deshabilitados. | 19, 21–26 |
 | A4 | Reporte de usuarios y roles | `/reportes/usuarios-roles` | Vista del reporte (sin exportación). | 56 |
 

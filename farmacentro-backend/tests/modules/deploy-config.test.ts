@@ -57,4 +57,10 @@ describe('demo users in the deployed environment', () => {
     expect(demoEmail('regente', 'Equipo.FarmaCentro@gmail.com')).toBe('equipo.farmacentro+regente@gmail.com');
     expect(() => demoEmail('regente', 'no-es-correo')).toThrow();
   });
+
+  it('sends the admin account to the company mailbox when SEED_ADMIN_EMAIL is set', () => {
+    expect(demoEmail('admin', 'equipo@gmail.com', 'FarmaCentro053@gmail.com')).toBe('farmacentro053@gmail.com');
+    expect(demoEmail('cajero', 'equipo@gmail.com', 'farmacentro053@gmail.com')).toBe('equipo+cajero@gmail.com');
+    expect(demoEmail('admin', 'equipo@gmail.com', undefined)).toBe('equipo+admin@gmail.com');
+  });
 });

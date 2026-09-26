@@ -70,6 +70,7 @@ erDiagram
 | `passwordHash` | String | bcrypt, costo 12 | — (secreto) |
 | `passwordChangedAt` | Date | | — |
 | `mustChangePassword` | Boolean | `true` al crear o al restablecer | — |
+| `temporaryPasswordExpiresAt` | Date | null | `ahora + 48 h` al crear o restablecer; `null` al cambiar la contraseña. Pasada esa fecha la contraseña temporal se rechaza (`auth.login.failure`, motivo `temporary_password_expired`) | — |
 | `failedLoginCount` | Int | Se incrementa con `$inc` atómico; se reinicia al entrar | — |
 | `lockedUntil` | Date \| null | `ahora + 15 min` al llegar a 5 fallos | — |
 | `lastLoginAt` | Date \| null | | — |

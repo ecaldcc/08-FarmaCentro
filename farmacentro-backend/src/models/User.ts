@@ -11,6 +11,8 @@ export interface IUser {
   passwordHash: string;
   passwordChangedAt: Date;
   mustChangePassword: boolean;
+  /** Expiry of the temporary password sent in the invitation (null = no temporary password). */
+  temporaryPasswordExpiresAt: Date | null;
   failedLoginCount: number;
   lockedUntil: Date | null;
   lastLoginAt: Date | null;
@@ -31,6 +33,7 @@ const UserSchema = new Schema<IUser>(
     passwordHash: { type: String, required: true, select: false },
     passwordChangedAt: { type: Date, required: true },
     mustChangePassword: { type: Boolean, default: true },
+    temporaryPasswordExpiresAt: { type: Date, default: null },
     failedLoginCount: { type: Number, default: 0 },
     lockedUntil: { type: Date, default: null },
     lastLoginAt: { type: Date, default: null },

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { http } from '../../api/http';
-import { ROLE_LABELS, type Role, type UserDetail } from '../../api/types';
+import { ROLE_LABELS, type Invitation, type Role, type UserDetail } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
 import { useStepUp } from '../../auth/StepUp';
 import { Alert, Badge, Button, DateTime, ErrorAlert, Field, Loading, Modal, PageHeader, ReasonDialog } from '../../components/ui';
@@ -24,7 +24,6 @@ export function UserDetailPage() {
   const [error, setError] = useState<unknown>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
   const [newRole, setNewRole] = useState<Role>('cajero');
-  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -59,11 +58,6 @@ export function UserDetailPage() {
         }
       />
       {notice && <Alert kind="success">{notice}</Alert>}
-      {temporaryPassword && (
-        <Alert kind="warning">
-          Contraseña temporal (se muestra una sola vez): <code className="secret">{temporaryPassword}</code>
-        </Alert>
-      )}
       <div className="grid-2">
         <section className="card">
           <h2>Datos</h2>
@@ -73,8 +67,17 @@ export function UserDetailPage() {
             <dt>Estado</dt>
             <dd>
               {user.status === 'active' ? <Badge tone="success">Activo</Badge> : <Badge tone="danger">Deshabilitado</Badge>}{' '}
+              {user.mustChangePassword && <Badge tone="warning">Invitación pendiente</Badge>}{' '}
               {user.locked && <Badge tone="warning">Bloqueado hasta {new Date(user.lockedUntil ?? '').toLocaleTimeString('es-GT')}</Badge>}
             </dd>
+            {user.temporaryPasswordExpiresAt && (
+              <>
+                <dt>Contraseña temporal vence</dt>
+                <dd>
+                  <DateTime value={user.temporaryPasswordExpiresAt} />
+                </dd>
+              </>
+            )}
             <dt>Último acceso</dt>
             <dd>
               <DateTime value={user.lastLoginAt} />
@@ -96,7 +99,7 @@ export function UserDetailPage() {
               Desbloquear
             </Button>
             <Button variant="secondary" onClick={() => setDialog({ kind: 'reset' })} disabled={isSelf}>
-              Restablecer contraseña
+              {user.mustChangePassword ? 'Reenviar invitación' : 'Restablecer contraseña'}
             </Button>
           </div>
         </section>
@@ -173,16 +176,25 @@ export function UserDetailPage() {
       )}
       {dialog?.kind === 'reset' && (
         <ReasonDialog
-          title="Restablecer contraseña"
-          description={<p>Se generará una contraseña temporal que el usuario deberá cambiar al entrar.</p>}
-          confirmLabel="Restablecer"
+          title={user.mustChangePassword ? 'Reenviar invitación' : 'Restablecer contraseña'}
+          description={
+            <p>
+              Se generará una nueva contraseña temporal (válida 48 horas) y se enviará a <strong>{user.email}</strong>. La
+              anterior deja de funcionar y el usuario deberá cambiarla al entrar.
+            </p>
+          }
+          confirmLabel="Enviar"
           onClose={() => setDialog(null)}
           onConfirm={async (reason) => {
             const result = await withStepUp(
               { action: 'user.password.reset', targetId: user.id, label: `Restablecer contraseña (${user.username})` },
-              () => http.post<{ temporaryPassword: string }>(`/users/${user.id}/password-reset`, { reason }),
+              () => http.post<{ invitation: Invitation }>(`/users/${user.id}/password-reset`, { reason }),
             );
-            setTemporaryPassword(result.temporaryPassword);
+            setNotice(
+              result.invitation.sent
+                ? `Se envió una nueva contraseña temporal a ${result.invitation.sentTo}.`
+                : 'La contraseña se restableció, pero el correo no se pudo enviar. Revisa la dirección e inténtalo de nuevo.',
+            );
             await load();
           }}
         />

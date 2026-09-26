@@ -13,7 +13,7 @@ export function actorOf(user: Pick<IUser, '_id' | 'username' | 'role'> | { id: s
   return { userId: id, username: user.username, role: user.role };
 }
 
-type FailureReason = 'unknown_user' | 'bad_password' | 'locked' | 'disabled';
+type FailureReason = 'unknown_user' | 'bad_password' | 'locked' | 'disabled' | 'temporary_password_expired';
 
 async function auditLoginFailure(ctx: AuditContext, reason: FailureReason, username: string, user?: IUser | null) {
   await appendAudit(ctx, {
@@ -50,6 +50,11 @@ export async function verifyFirstFactor(username: string, password: string, ctx:
   if (!(await verifyPassword(password, user.passwordHash))) {
     await auditLoginFailure(ctx, 'bad_password', username, user);
     await registerAuthFailure(user._id, ctx);
+    throw Errors.invalidCredentials();
+  }
+  // A temporary password (invitation or reset) only works until it expires.
+  if (user.mustChangePassword && user.temporaryPasswordExpiresAt && user.temporaryPasswordExpiresAt.getTime() < Date.now()) {
+    await auditLoginFailure(ctx, 'temporary_password_expired', username, user);
     throw Errors.invalidCredentials();
   }
   await appendAudit(ctx, {
@@ -117,7 +122,14 @@ export async function changeOwnPassword(
   }
   await User.updateOne(
     { _id: user._id },
-    { $set: { passwordHash: await hashPassword(newPassword), passwordChangedAt: new Date(), mustChangePassword: false } },
+    {
+      $set: {
+        passwordHash: await hashPassword(newPassword),
+        passwordChangedAt: new Date(),
+        mustChangePassword: false,
+        temporaryPasswordExpiresAt: null,
+      },
+    },
   );
   await appendAudit(ctx, { action: 'auth.password.changed', result: 'success', entity: 'user', entityId: userId });
   await notifyUser(user.email, 'contraseña cambiada', 'La contraseña de tu cuenta se cambió correctamente.');

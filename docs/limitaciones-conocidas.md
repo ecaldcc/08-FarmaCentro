@@ -8,7 +8,7 @@
 |---|---|---|
 | Pagos con tarjeta | Genera una referencia ficticia `SIM-XXXXXXXXXX`. No existe ningún campo de tarjeta y la API rechaza cualquier dato extra. | Terminal P2PE del procesador; FarmaCentro nunca ve la tarjeta. |
 | Respaldo (8.13) | `npm run backup` exporta y cifra con AES-256-GCM; `npm run restore-test` restaura en una base temporal y verifica conteos y la cadena de la bitácora. | Respaldo diario fuera de sitio con prueba mensual. |
-| Correo | En desarrollo (`MAIL_TRANSPORT=console`) los correos se muestran en la terminal del backend y no se envían. | SMTP real con SPF/DKIM. |
+| Correo | En desarrollo (`MAIL_TRANSPORT=console`) los correos (códigos e invitaciones) se muestran en la terminal del backend y no se envían. | SMTP real con SPF/DKIM. |
 | Factura | El comprobante no tiene validez fiscal. | Factura electrónica FEL de la SAT (fuera de alcance). |
 
 ## Solo documentado (fuera de alcance)
@@ -30,3 +30,4 @@ Tienda en línea, modo de contingencia del POS, enlace 4G de respaldo, segmentac
 11. **Acceso de red a Atlas:** si Render no ofrece IPs de salida fijas en la cuenta, la lista de acceso de Atlas queda en `0.0.0.0/0`. La protección recae en usuarios de base de datos con contraseñas largas, rol de mínimo privilegio y TLS obligatorio.
 12. **Correo por Brevo:** Render gratis bloquea el SMTP, por lo que los códigos se envían por la API HTTPS de Brevo (plan gratuito de 300 correos diarios). Brevo es un proveedor más dentro del alcance de 5.19–5.22.
 13. **Acceso directo a Render (resuelto):** Netlify firma cada petición a la API (`x-nf-sign`, HS256 con un secreto compartido). La API rechaza con 403 cualquier llamada sin firma válida, salvo `/api/health`, y solo entonces toma la IP del cliente de `x-nf-client-connection-ip`. Así la IP de la bitácora no se puede falsificar llamando a Render directamente.
+14. **Contraseña temporal por correo (D-29):** la invitación viaja en texto por el correo del empleado y pasa por Brevo. Se mitiga con: vencimiento a las 48 horas, un solo uso práctico (deja de funcionar al cambiarla), segundo factor antes de poder usarla y cambio obligatorio al primer ingreso. En producción se usaría un enlace de activación de un solo uso en lugar de una contraseña.

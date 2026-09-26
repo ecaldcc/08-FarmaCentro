@@ -122,7 +122,7 @@ Netlify reenvía `/api/*` a Render. Así el navegador solo habla con el dominio 
 
 ### 5.2 Preparar la base en Atlas (desde tu PC)
 
-1. En `farmacentro-backend`, copia `.env.production.example` a `.env.production` (no se sube a Git) y complétalo: cadenas de Atlas, claves, Brevo, `CLIENT_ORIGIN`/`RP_ID` con la URL de Netlify, `SEED_PASSWORD` (privada, 12+ caracteres) y `SEED_EMAIL` (buzón real del equipo; cada usuario recibe sus códigos en `buzon+regente@…`, `buzon+cajero@…`, etc.).
+1. En `farmacentro-backend`, copia `.env.production.example` a `.env.production` (no se sube a Git) y complétalo: cadenas de Atlas, claves, Brevo, `CLIENT_ORIGIN`/`RP_ID` con la URL de Netlify, `SEED_PASSWORD` (privada, 12+ caracteres) y `SEED_EMAIL` (buzón real del equipo; cada usuario recibe sus códigos en `buzon+regente@…`, `buzon+cajero@…`, etc.). Opcional: `SEED_ADMIN_EMAIL` para que la cuenta `admin` use el buzón de la empresa (`farmacentro053@gmail.com`). En una base ya sembrada se cambia con `npm run set-user-email:prod -- --username=admin --email=<correo>`.
 2. Crea colecciones, índices y el registro génesis, y carga los datos de prueba:
    ```bash
    npm run setup-db:prod

@@ -25,6 +25,8 @@
     "seed:prod": "tsx scripts/seed.ts --env=.env.production",
     "check-db-privileges:prod": "tsx scripts/check-db-privileges.ts --env=.env.production",
     "verify-audit:prod": "tsx scripts/verify-audit-chain.ts --env=.env.production",
+    "set-user-email": "tsx scripts/set-user-email.ts",
+    "set-user-email:prod": "tsx scripts/set-user-email.ts --env=.env.production",
     "atlas:provision": "tsx scripts/atlas-provision.ts --env=.env.production"
   },
   "dependencies": {

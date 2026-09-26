@@ -20,6 +20,7 @@ export const AUDIT_ACTIONS = [
   'webauthn.credential.revoked',
   'webauthn.counter.anomaly',
   'user.created',
+  'user.invitation.sent',
   'user.updated',
   'user.role.changed',
   'user.disabled',

@@ -5,6 +5,8 @@ import { COMMON_PASSWORDS } from '../data/commonPasswords.js';
 
 export const PASSWORD_MIN_LENGTH = 12;
 export const PASSWORD_MAX_BYTES = 72; // bcrypt ignores everything after 72 bytes
+/** Validity of the temporary password e-mailed in an invitation or reset. */
+export const TEMP_PASSWORD_HOURS = 48;
 
 // Precomputed hash used to spend the same time when the user does not exist (anti-enumeration).
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', env.BCRYPT_COST);

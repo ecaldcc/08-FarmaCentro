@@ -41,8 +41,16 @@ export interface UserSummary {
   lockedUntil: string | null;
   hasWebAuthn: boolean;
   mustChangePassword: boolean;
+  temporaryPasswordExpiresAt: string | null;
   lastLoginAt: string | null;
   createdAt: string;
+}
+
+/** Result of e-mailing the username and temporary password to the employee. */
+export interface Invitation {
+  sent: boolean;
+  sentTo: string;
+  expiresAt: string;
 }
 
 export interface CredentialInfo {

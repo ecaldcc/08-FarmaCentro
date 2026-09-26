@@ -51,7 +51,7 @@ Leyenda: **Sí** = permitido · **Parcial** = permitido con restricción (ver no
 | **Cambiar rol** | Parcial³ | — | — | — | — | **Sí** | `user.role.changed` |
 | Deshabilitar / habilitar | Parcial³ | — | — | — | — | **Sí** | `user.disabled` / `user.enabled` |
 | Desbloquear cuenta | Sí | — | — | — | — | **Sí** | `auth.account.unlocked` |
-| Restablecer contraseña (temporal) | Sí | — | — | — | — | **Sí** | `auth.password.reset` |
+| Restablecer contraseña / reenviar invitación (temporal por correo) | Sí | — | — | — | — | **Sí** | `auth.password.reset` |
 | Revocar huella de otro usuario (dispositivo perdido) | Sí | — | — | — | — | **Sí** | `webauthn.credential.revoked` |
 
 ¹ El Auditor ve usuarios solo a través del reporte "Usuarios y roles" (sin correo completo).
@@ -139,6 +139,7 @@ Leyenda: **Sí** = permitido · **Parcial** = permitido con restricción (ver no
 | `webauthn.credential.registered` / `.revoked` | success / failure | webauthn_credential | Alta o baja de una huella. |
 | `webauthn.counter.anomaly` | failure | webauthn_credential | El contador de firmas retrocedió (posible clonación). |
 | `user.created` / `user.updated` / `user.role.changed` / `user.disabled` / `user.enabled` | success / failure | user | Administración de cuentas (`fromRole`, `toRole`, `reason`). |
+| `user.invitation.sent` | success / failure | user | Correo con usuario y contraseña temporal enviado al empleado al crear la cuenta o al restablecerla (`kind`, `expiresAt`). Nunca incluye la contraseña. |
 | `authz.denied` | denied | según ruta | Acceso por rol no autorizado o re-autenticación ausente. |
 | `security.origin.rejected` | denied | — | Escritura con `Origin` distinto de `CLIENT_ORIGIN`. |
 | `security.rate_limited` | denied | — | Límite de peticiones en login o envío de códigos. |

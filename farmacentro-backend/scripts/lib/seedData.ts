@@ -17,8 +17,14 @@ export const DEV_PASSWORD = 'FarmaCentro-Demo-2026!';
  * E-mail of each demo user. Locally the fictitious @farmacentro.test addresses are enough (codes are
  * printed in the terminal). When deployed, codes are really sent: with SEED_EMAIL=equipo@gmail.com
  * every user gets a sub-address of that mailbox (equipo+regente@gmail.com), which Gmail delivers.
+ * SEED_ADMIN_EMAIL, when set, is used as is for the `admin` account (the company mailbox).
  */
-export function demoEmail(username: string, seedEmail = process.env.SEED_EMAIL): string {
+export function demoEmail(
+  username: string,
+  seedEmail = process.env.SEED_EMAIL,
+  adminEmail = process.env.SEED_ADMIN_EMAIL,
+): string {
+  if (username === 'admin' && adminEmail) return adminEmail.trim().toLowerCase();
   if (!seedEmail) return `${username}@farmacentro.test`;
   const [local, domain] = seedEmail.trim().toLowerCase().split('@');
   if (!local || !domain) throw new Error('SEED_EMAIL debe ser un correo válido');

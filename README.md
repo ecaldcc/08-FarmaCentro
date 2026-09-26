@@ -42,7 +42,7 @@ Se diseñó a partir del modelo de seguridad basado en **ISO/IEC 27001:2022** (v
 | Módulo | Qué hace | Controles de seguridad destacados |
 |---|---|---|
 | Autenticación | Usuario y contraseña + **segundo factor**: huella (WebAuthn / Windows Hello) o código de 6 dígitos por correo | bcrypt (costo 12), bloqueo de 15 min tras 5 intentos, sesión en servidor que expira a los 15 min de inactividad |
-| Usuarios y roles | Administrador, Regente, Cajero, Bodeguero y Auditor | Control por roles en el backend, mínimo privilegio, segregación de funciones |
+| Usuarios y roles | Administrador, Regente, Cajero, Bodeguero y Auditor. El alta se hace por **invitación**: el empleado recibe por correo su usuario y una contraseña temporal (48 h) que debe cambiar al entrar | Control por roles en el backend, mínimo privilegio, segregación de funciones |
 | Inventario | Productos, lotes, vencimientos (FEFO), marca de medicamento controlado | Ajustes con motivo y **re-autenticación**; kardex de solo inserción |
 | Ventas de mostrador | Cobro en efectivo o tarjeta **simulada**; comprobante a CF, NIT o DPI (obligatorio desde Q2,500.00) | Anulación solo por el Regente con re-autenticación y motivo; NIT y DPI cifrados; transacciones MongoDB |
 | Clientes y fidelización | Registro con datos mínimos y puntos | **Consentimiento de privacidad obligatorio**; teléfono y correo cifrados |
@@ -58,7 +58,7 @@ La re-autenticación (step-up) sirve para **una sola operación**, queda ligada 
 - **API:** Node.js 22 + Express 5 + TypeScript, en capas `routes → controllers → services → models`
 - **Base de datos:** MongoDB local (replica set) en desarrollo y MongoDB Atlas (M0) para la entrega, con Mongoose 9, transacciones y un usuario de base de datos con rol personalizado de mínimo privilegio
 - **Seguridad:** helmet (CSP), CORS restringido, verificación de origen, Zod, `sanitizeFilter`, `express-rate-limit`, `express-session` + `connect-mongo`
-- **Pruebas:** Vitest + Supertest + MongoDB en memoria (145 pruebas, incluidas las de seguridad)
+- **Pruebas:** Vitest + Supertest + MongoDB en memoria (156 pruebas, incluidas las de seguridad)
 
 ## Estructura
 

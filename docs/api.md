@@ -176,7 +176,7 @@ body = z.strictObject({ code: Code6 })
 body = z.strictObject({ currentPassword: z.string().min(1).max(128), newPassword: Password })
   .refine(b => b.newPassword !== b.currentPassword)
 ```
-- 204. Regenera la sesión, pone `mustChangePassword = false`, envía aviso por correo. 400 si la actual es incorrecta (cuenta para el bloqueo).
+- 204. Regenera la sesión, pone `mustChangePassword = false` y `temporaryPasswordExpiresAt = null`, envía aviso por correo. 400 si la actual es incorrecta (cuenta para el bloqueo).
 
 **10. `POST /auth/step-up/webauthn/options`**
 ```ts
@@ -229,7 +229,7 @@ query = Page.extend({ role: Role.optional(), status: z.enum(['active','disabled'
 body = z.strictObject({ username: Username, fullName: z.string().trim().min(3).max(100),
                         email: Email, role: Role })
 ```
-- 201 `{ user, temporaryPassword }`. La contraseña temporal (16 caracteres aleatorios) se muestra **una sola vez** y no se registra en la bitácora ni en los logs; `mustChangePassword = true`. 409 si el username o el correo ya existen.
+- 201 `{ user, invitation: { sent, sentTo, expiresAt } }`. La contraseña temporal (16 caracteres aleatorios) **se envía solo por correo al empleado** (invitación con usuario, contraseña temporal y enlace de ingreso); el Administrador no la ve, y no se registra en la bitácora ni en los logs. Vence a las 48 horas (`temporaryPasswordExpiresAt`); `mustChangePassword = true`. `sentTo` va enmascarado. Si el correo falla, la cuenta queda creada con `invitation.sent = false` y se reenvía con el endpoint 25. Eventos: `user.created` y `user.invitation.sent` (success / failure). 409 si el username o el correo ya existen.
 
 **21. `PATCH /users/:id`** · 2FA `user.update`
 ```ts
@@ -252,7 +252,7 @@ body = z.strictObject({ status: z.enum(['active', 'disabled']), reason: Reason }
 
 **24. `POST /users/:id/unlock`** · 2FA `user.unlock` · body `{ reason: Reason }` — 204. Pone `lockedUntil = null`, `failedLoginCount = 0`.
 
-**25. `POST /users/:id/password-reset`** · 2FA `user.password.reset` · body `{ reason: Reason }` — 200 `{ temporaryPassword }` (una sola vez); `mustChangePassword = true`; aviso por correo al usuario.
+**25. `POST /users/:id/password-reset`** · 2FA `user.password.reset` · body `{ reason: Reason }` — 200 `{ invitation: { sent, sentTo, expiresAt } }`. Genera una contraseña temporal nueva (la anterior deja de funcionar), vigente 48 horas, y la **envía por correo al usuario** (en la interfaz se llama "Reenviar invitación" mientras la cuenta no haya entrado por primera vez). `mustChangePassword = true`. Eventos: `auth.password.reset` y `user.invitation.sent`.
 
 **26. `DELETE /users/:id/webauthn/:credId`** · 2FA `user.webauthn.revoke` · body `{ reason: Reason }` — 204. Aviso por correo.
 
