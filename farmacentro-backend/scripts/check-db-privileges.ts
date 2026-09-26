@@ -38,7 +38,7 @@ async function attempt(label: string, expectAllowed: boolean, action: () => Prom
     await action();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (!/not authorized|unauthorized/i.test(message)) throw error;
+    if (!/not authorized|unauthorized|not allowed to do action/i.test(message)) throw error;
     allowed = false;
   }
   const ok = allowed === expectAllowed;

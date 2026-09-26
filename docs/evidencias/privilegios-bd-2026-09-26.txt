@@ -1,0 +1,27 @@
+Verificación de privilegios del usuario de la API — 2026-09-26T01:15:13.361Z
+Base: farmacentro
+
+Usuario autenticado: farmacentro_api@admin
+Privilegios efectivos:
+  farmacentro.audit_logs: find, insert
+  farmacentro.products: find, insert, update
+  farmacentro.email_otps: find, insert, update
+  farmacentro.webauthn_credentials: find, insert, update
+  farmacentro.billing_parties: find, insert, update
+  farmacentro.sessions: find, insert, remove, update
+  farmacentro.inventory_lots: find, insert, update
+  farmacentro.customers: find, insert, update
+  farmacentro.users: find, insert, update
+  farmacentro.counters: find, insert, update
+  farmacentro.dispensations: find, insert
+  farmacentro.sales: find, insert, update
+  farmacentro.prescriptions: find, insert, update
+  farmacentro.loyalty_transactions: find, insert
+  farmacentro.inventory_movements: find, insert
+
+OK    find en audit_logs: permitido (esperado: permitido)
+OK    updateOne en audit_logs: denegado (esperado: denegado)
+OK    deleteOne en audit_logs: denegado (esperado: denegado)
+OK    createIndex en audit_logs: denegado (esperado: denegado)
+OK    drop de audit_logs: denegado (esperado: denegado)
+OK    deleteMany en inventory_movements: denegado (esperado: denegado)
