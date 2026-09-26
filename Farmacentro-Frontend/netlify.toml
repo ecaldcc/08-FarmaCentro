@@ -17,6 +17,13 @@
   status = 200
   force = true
 
+# TEMPORARY diagnostic (to be removed): shows which X-Forwarded-For Netlify sends to a proxied origin.
+[[redirects]]
+  from = "/__diag-headers"
+  to = "https://postman-echo.com/headers"
+  status = 200
+  force = true
+
 # Single-page application: every other route is handled by React Router.
 [[redirects]]
   from = "/*"
