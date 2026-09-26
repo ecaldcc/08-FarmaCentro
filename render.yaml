@@ -21,9 +21,9 @@ services:
         value: production
       - key: MONGOMS_DISABLE_POSTINSTALL
         value: "1"
-      # Browser → Netlify proxy → Render load balancer → API: two trusted hops for the client IP.
+      # Browser → Netlify → Cloudflare (Render edge) → Render internal proxy → API: 4 trusted hops for the client IP.
       - key: TRUST_PROXY
-        value: "2"
+        value: "4"
       - key: CLIENT_ORIGIN
         sync: false
       - key: RP_ID

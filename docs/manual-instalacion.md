@@ -152,7 +152,7 @@ Netlify reenvía `/api/*` a Render. Así el navegador solo habla con el dominio 
 | `BREVO_API_KEY` | La API key de Brevo |
 | `MAIL_FROM` | `FarmaCentro <remitente-verificado@gmail.com>` |
 
-   Los demás valores ya vienen en `render.yaml`: `NODE_ENV=production`, `MAIL_TRANSPORT=brevo`, `TRUST_PROXY=2`, `STEP_UP_ALLOW_EMAIL=true` (decisión D-03), Node 22.16.0.
+   Los demás valores ya vienen en `render.yaml`: `NODE_ENV=production`, `MAIL_TRANSPORT=brevo`, `TRUST_PROXY=4`, `STEP_UP_ALLOW_EMAIL=true` (decisión D-03), Node 22.16.0.
 3. Cuando termine el despliegue, abre `https://zero8-farmacentro-backend.onrender.com/api/health`: debe responder `{"status":"ok"}`. Si Render asignó otra URL (por ejemplo con un sufijo), cópiala para el paso siguiente.
 
 ### 5.4 Frontend en Netlify
@@ -166,7 +166,7 @@ Netlify reenvía `/api/*` a Render. Así el navegador solo habla con el dominio 
 ### 5.5 Qué tener en cuenta
 
 - **Render gratis se duerme** tras 15 minutos sin tráfico y tarda de 30 a 60 segundos en despertar. El proxy de Netlify espera unos 26 segundos, así que la primera petición puede fallar: abre antes `https://zero8-farmacentro-backend.onrender.com/api/health` y espera la respuesta.
-- **IP en la bitácora:** con `TRUST_PROXY=2` la API toma la IP del navegador (Netlify y el balanceador de Render son los dos saltos de confianza). Verifícalo en la primera prueba mirando la bitácora.
+- **IP en la bitácora:** con `TRUST_PROXY=4` la API toma la IP del navegador. Entre el navegador y la API hay cuatro saltos de confianza: Netlify, Cloudflare (al frente de Render) y dos proxies internos de Render. Para comprobarlo, compara la IP que registra un intento de login fallido con la IP pública del equipo.
 - **Credenciales del grupo auditor:** se entregan por un canal privado, nunca en el repositorio, junto con el ancla de la bitácora (`npm run verify-audit:prod`).
 
 ## 6. Verificación
