@@ -21,7 +21,7 @@ Prototipo académico del curso **Seguridad y Auditoría de Sistemas** (Universid
 | **Backend (API)** | Render (`farmacentro-backend`) · se accede a través de `https://farmacentro.netlify.app/api` |
 | **Base de datos** | MongoDB Atlas M0 (base `farmacentro`) |
 | **Repositorio** | [github.com/ecaldcc/08-FarmaCentro](https://github.com/ecaldcc/08-FarmaCentro) |
-| **Estado** | Desplegada · en verificación antes de la entrega al grupo auditor |
+| **Estado** | Desplegada y verificada (26/09/2026) · lista para la entrega al grupo auditor |
 
 > **Primer acceso del día:** el backend está en el plan gratuito de Render y se duerme tras 15 minutos sin uso. Si la primera carga tarda o falla, espera un minuto y vuelve a intentar.
 
