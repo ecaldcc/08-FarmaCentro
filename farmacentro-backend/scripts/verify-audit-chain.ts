@@ -20,7 +20,8 @@ const mongoose = (await import('mongoose')).default;
 const { verifyAuditChain } = await import('../src/services/audit.service.js');
 
 mongoose.set('sanitizeFilter', true);
-await mongoose.connect(uri, { autoIndex: false, autoCreate: false });
+const { withDefaultDb } = await import('../src/db/uri.js');
+await mongoose.connect(withDefaultDb(uri), { autoIndex: false, autoCreate: false });
 const result = await verifyAuditChain();
 await mongoose.disconnect();
 

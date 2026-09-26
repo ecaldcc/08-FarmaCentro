@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { withDefaultDb } from '../db/uri.js';
 import { env } from './env.js';
 
 // Injection protections (CLAUDE.md, control 8.28): operators coming from user input are
@@ -10,7 +11,7 @@ mongoose.set('autoIndex', false);
 mongoose.set('autoCreate', false);
 
 export async function connectDatabase(uri: string = env.MONGODB_URI): Promise<typeof mongoose> {
-  return mongoose.connect(uri, {
+  return mongoose.connect(withDefaultDb(uri), {
     autoIndex: false,
     autoCreate: false,
     serverSelectionTimeoutMS: 10_000,

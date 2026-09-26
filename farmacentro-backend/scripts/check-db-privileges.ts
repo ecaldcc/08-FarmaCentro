@@ -6,10 +6,12 @@
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { withDefaultDb } from '../src/db/uri.js';
 import { EVIDENCE_DIR, loadScriptEnv, REPO_ROOT, requireVar } from './lib/env.js';
 
 loadScriptEnv();
-const apiUri = requireVar('MONGODB_URI_API');
+// The API user: MONGODB_URI_API, or MONGODB_URI (same user) when only that one is set.
+const apiUri = withDefaultDb(process.env.MONGODB_URI_API ?? requireVar('MONGODB_URI'));
 
 const mongoose = (await import('mongoose')).default;
 await mongoose.connect(apiUri, { autoIndex: false, autoCreate: false });

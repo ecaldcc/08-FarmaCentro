@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { withDefaultDb } from '../../src/db/uri.js';
 
 /** farmacentro-backend/ */
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -47,9 +48,9 @@ export function requireVar(name: string): string {
  * falls back to MONGODB_URI; in production the separate migrator user is mandatory.
  */
 export function adminUri(): string {
-  if (process.env.MONGODB_URI_ADMIN) return process.env.MONGODB_URI_ADMIN;
-  if (process.env.NODE_ENV !== 'production' && process.env.MONGODB_URI) return process.env.MONGODB_URI;
-  return requireVar('MONGODB_URI_ADMIN');
+  if (process.env.MONGODB_URI_ADMIN) return withDefaultDb(process.env.MONGODB_URI_ADMIN);
+  if (process.env.NODE_ENV !== 'production' && process.env.MONGODB_URI) return withDefaultDb(process.env.MONGODB_URI);
+  return withDefaultDb(requireVar('MONGODB_URI_ADMIN'));
 }
 
 export function hasFlag(flag: string): boolean {
