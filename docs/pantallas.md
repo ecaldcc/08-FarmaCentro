@@ -20,9 +20,10 @@
 | C1 | Iniciar sesión | `/login` | Usuario y contraseña. Mensaje de error genérico. | 2 |
 | C2 | Segundo factor | `/login/segundo-factor` | Botón "Usar mi huella" y enlace "Enviarme un código por correo". Si el usuario no tiene huella, solo código. Campo de 6 dígitos con cuenta regresiva de 5 min y "Reenviar" habilitado a los 60 s. | 3–6 |
 | C3 | Cambio de contraseña obligatorio | `/cambiar-contrasena` | Aparece si `mustChangePassword`. Muestra las reglas (12+ caracteres, no contener el usuario). | 9 |
+| C4b | App autenticadora | `/mi-cuenta` | Configurar Google o Microsoft Authenticator: re-autenticación, código QR (dibujado como SVG, sin `innerHTML`), clave para escribir a mano y confirmación con un código. Botones "Cambiar de celular" y "Quitar". | 5 (D-32) |
 | C4 | Registrar mi huella | `/mi-cuenta/huellas/nueva` | Sugerida después del primer ingreso ("Registra tu huella para operar más rápido y seguro"). Pide re-autenticación con código. | 10–16 |
 | C5 | Mi cuenta | `/mi-cuenta` | Datos propios, cambiar contraseña, lista de huellas registradas (revocar). | 8, 9, 14, 17 |
-| C6 | Modal de re-autenticación | (modal) | "Esta operación requiere confirmar tu identidad": muestra la acción (p. ej. "Anular venta V-000123"), botón de huella y, si D-03 lo permite, código por correo. | 10–13 |
+| C6 | Modal de re-autenticación | (modal) | "Esta operación requiere confirmar tu identidad": muestra la acción (p. ej. "Anular venta V-000123") y pide el **código de la app autenticadora** o la huella. Si el usuario no tiene ninguno, lo envía a Mi cuenta. El código por correo solo aparece al configurar la primera app o huella (D-32). | 10–13 |
 | C7 | Aviso de sesión por expirar | (modal) | Ver §1. | 8 |
 | C8 | Acceso denegado | `/acceso-denegado` | Mensaje genérico y botón a la pantalla de inicio del rol. | — |
 | C9 | No encontrado / Error | `/404`, `/error` | Genéricas, con `requestId` cuando exista. | — |
@@ -35,7 +36,7 @@
 |---|---|---|---|---|
 | A1 | Usuarios (inicio) | `/usuarios` | Tabla con filtros por rol y estado; indicadores de bloqueado y de huella registrada. | 18 |
 | A2 | Nuevo usuario | `/usuarios/nuevo` | Formulario (nombre de usuario, nombre del empleado, correo del empleado y rol) + re-autenticación. Al guardar se envía la invitación al correo del empleado; la pantalla solo confirma el envío (correo enmascarado y vencimiento), **nunca muestra la contraseña**. | 20 |
-| A3 | Detalle de usuario | `/usuarios/:id` | Datos, huellas, y acciones: editar, cambiar rol, deshabilitar/habilitar, desbloquear, restablecer contraseña, revocar huella. Cada acción pide motivo y re-autenticación. Los botones sobre la propia cuenta aparecen deshabilitados. | 19, 21–26 |
+| A3 | Detalle de usuario | `/usuarios/:id` | Datos, huellas, y acciones: editar, cambiar rol, deshabilitar/habilitar, desbloquear, restablecer contraseña, revocar huella, restablecer app autenticadora. Cada acción pide motivo y re-autenticación. Los botones sobre la propia cuenta aparecen deshabilitados. | 19, 21–26 |
 | A4 | Reporte de usuarios y roles | `/reportes/usuarios-roles` | Vista del reporte (sin exportación). | 56 |
 
 ### 3.2 Regente

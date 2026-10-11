@@ -69,3 +69,9 @@ export async function revokeCredential(req: Request, res: Response): Promise<voi
   await users.revokeUserCredential(params.id, params.credId, body.reason, actorId(req), auditContext(req), stepUpMethod(res));
   res.status(204).end();
 }
+
+export async function revokeTotp(req: Request, res: Response): Promise<void> {
+  const { params, body } = input<IdParams, unknown, ReasonInput>(req);
+  await users.revokeUserTotp(params.id, body.reason, actorId(req), auditContext(req), stepUpMethod(res));
+  res.status(204).end();
+}

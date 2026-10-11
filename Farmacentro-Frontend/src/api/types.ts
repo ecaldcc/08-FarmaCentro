@@ -1,5 +1,5 @@
 export type Role = 'admin' | 'regente' | 'cajero' | 'bodeguero' | 'auditor';
-export type SecondFactorMethod = 'webauthn' | 'email_otp';
+export type SecondFactorMethod = 'webauthn' | 'email_otp' | 'totp';
 
 export const ROLE_LABELS: Record<Role, string> = {
   admin: 'Administrador',
@@ -24,6 +24,7 @@ export interface SessionInfo {
     role: Role;
     mustChangePassword: boolean;
     hasWebAuthn: boolean;
+    hasTotp: boolean;
   };
   permissions: string[];
   stepUpMethods: SecondFactorMethod[];
@@ -40,6 +41,7 @@ export interface UserSummary {
   locked: boolean;
   lockedUntil: string | null;
   hasWebAuthn: boolean;
+  hasTotp: boolean;
   mustChangePassword: boolean;
   temporaryPasswordExpiresAt: string | null;
   lastLoginAt: string | null;

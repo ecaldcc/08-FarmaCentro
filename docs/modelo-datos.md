@@ -70,6 +70,10 @@ erDiagram
 | `passwordHash` | String | bcrypt, costo 12 | — (secreto) |
 | `passwordChangedAt` | Date | | — |
 | `mustChangePassword` | Boolean | `true` al crear o al restablecer | — |
+| `totpSecret` | Cifrado \| null | Secreto de la app autenticadora (D-32), AES-256-GCM con AAD `users:<id>:totpSecret`. No se selecciona por defecto | C |
+| `totpEnabledAt` | Date \| null | Fecha en que se configuró la app | — |
+| `totpLastUsedStep` | Int | Último paso de 30 s aceptado; un código se acepta una sola vez | — |
+| `totpPendingSecret` / `totpPendingExpiresAt` | Cifrado \| null / Date \| null | Secreto en configuración, válido 10 minutos | C |
 | `temporaryPasswordExpiresAt` | Date | null | `ahora + 48 h` al crear o restablecer; `null` al cambiar la contraseña. Pasada esa fecha la contraseña temporal se rechaza (`auth.login.failure`, motivo `temporary_password_expired`) | — |
 | `failedLoginCount` | Int | Se incrementa con `$inc` atómico; se reinicia al entrar | — |
 | `lockedUntil` | Date \| null | `ahora + 15 min` al llegar a 5 fallos | — |

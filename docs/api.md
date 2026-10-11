@@ -190,9 +190,9 @@ body = z.strictObject({ response: WebAuthnAuthResponse })
 ```
 - 200 `{ action, targetId, grantExpiresAt }`. Guarda `stepUpGrant` en la sesión (un solo uso, 2 min). 401 genérico en fallo.
 
-**12. `POST /auth/step-up/email-otp/send`** · `otpSendLimiter` — body como 10. 200 `{ expiresAt, sentTo }`. 403 si la política (D-03) no permite correo para esa `action`.
+**12. `POST /auth/step-up/email-otp/send`** · `otpSendLimiter` — body como 10. 200 `{ expiresAt, sentTo }`. **Solo** para las acciones `webauthn.register` y `totp.enroll` cuando el usuario aún no tiene app autenticadora ni huella (D-32); en cualquier otro caso 403 `FORBIDDEN`.
 
-**13. `POST /auth/step-up/email-otp/verify`** · `mfaLimiter` — body `{ action, targetId, code: Code6 }` (la acción y el registro deben coincidir con los del código enviado). Respuestas como 11.
+**13. `POST /auth/step-up/email-otp/verify`** · `mfaLimiter` — body `{ action, targetId, code: Code6 }` (la acción y el registro deben coincidir con los del código enviado). Respuestas como 11. Misma restricción que 12.
 
 ### 3.3 Huellas de la cuenta propia
 
@@ -203,7 +203,7 @@ body = z.strictObject({ response: WebAuthnAuthResponse })
 body = z.strictObject({ nickname: z.string().trim().min(1).max(50) })
 ```
 - 200 `PublicKeyCredentialCreationOptionsJSON` con `authenticatorSelection: { authenticatorAttachment: "platform", residentKey: "discouraged", userVerification: "required" }`, `attestationType: "none"`, `excludeCredentials` = huellas ya registradas. Máximo 5 huellas activas por usuario (409).
-- Nota: en el primer ingreso el usuario entra con código por correo y la re-autenticación también será por correo.
+- Nota: en el primer ingreso el usuario entra con código por correo; para registrar su primera huella o app autenticadora confirma con código por correo (D-32).
 
 **16. `POST /me/webauthn/register/verify`**
 ```ts
@@ -211,7 +211,7 @@ body = z.strictObject({ response: WebAuthnRegResponse })
 ```
 - 201 `{ id, nickname, createdAt }`. Exige `requireUserVerification: true`. Aviso por correo "se registró una nueva huella en tu cuenta".
 
-**17. `DELETE /me/webauthn/credentials/:id`** · 2FA `webauthn.revoke` · params `{ id: ObjectId }` — 204. No se permite revocar la última huella si la política D-03 exige huella para operaciones sensibles del rol (409).
+**17. `DELETE /me/webauthn/credentials/:id`** · 2FA `webauthn.revoke` · params `{ id: ObjectId }` — 204.
 
 ### 3.4 Usuarios (Administrador)
 
@@ -407,6 +407,25 @@ query = Page.extend({ from: IsoDate.optional(), to: IsoDate.optional(),
 | 57 | Anulaciones | n.º de venta, fecha de venta, total, cajero, anulada por, fecha de anulación, motivo, método de 2FA |
 | 58 | Ajustes de inventario | fecha, producto, lote, controlado, cantidad, código y motivo, usuario, método de 2FA |
 | 59 | Despachos de controlados | fecha, folio, producto, lote, cantidad, regente, método de 2FA (**sin** datos del paciente ni del médico) |
+
+## 5. App autenticadora para operaciones críticas (agregado el 11/10/2026, D-32)
+
+- `403 STEP_UP_REQUIRED` incluye `methods` calculados por usuario y acción: `totp` si tiene la app, `webauthn` si tiene huella, y `email_otp` **solo** para `webauthn.register` y `totp.enroll` cuando no tiene ninguno de los dos. Una lista vacía significa "configura la app en Mi cuenta".
+- `GET /auth/me` agrega `user.hasTotp`; `stepUpMethods` es la lista para operaciones críticas.
+
+| Método | Ruta | Acceso | 2FA | Eventos |
+|---|---|---|---|---|
+| POST | `/auth/step-up/totp/verify` | autenticado · `mfaLimiter` | — | `auth.stepup.granted` (`method: totp`) / `auth.stepup.failed` (`reason: bad_code \| replayed \| not_enrolled`) |
+| GET | `/me/totp` | autenticado | — | — |
+| POST | `/me/totp/setup` | autenticado | Sí (`totp.enroll`) | — |
+| POST | `/me/totp/confirm` | autenticado · `mfaLimiter` | — | `totp.enrolled` (success / failure) |
+| DELETE | `/me/totp` | autenticado | Sí (`totp.revoke`) | `totp.revoked` (`by: owner`) |
+| DELETE | `/users/:id/totp` | admin | Sí (`user.totp.revoke`) | `totp.revoked` (`by: admin`, `reason`) |
+
+- **`POST /auth/step-up/totp/verify`** — body `{ action, targetId, code: Code6 }`. Acepta el paso de 30 s actual, el anterior y el siguiente. Cada paso se acepta **una sola vez** (actualización condicionada a `totpLastUsedStep`), así un código observado no se puede reutilizar. Un código incorrecto cuenta para el bloqueo de 5 intentos.
+- **`POST /me/totp/setup`** — 200 `{ otpauthUri, secret, issuer, account, expiresAt }`. Genera un secreto aleatorio de 20 bytes, guardado cifrado como pendiente durante 10 minutos. Es la única vez que el secreto sale del servidor (para el QR).
+- **`POST /me/totp/confirm`** — body `{ code }`. Activa el secreto pendiente si el código coincide; reemplaza la app anterior si había una. Notifica al usuario por correo.
+- **`DELETE /users/:id/totp`** — body `{ reason }`. Para celulares perdidos; 409 sobre la propia cuenta (se usa Mi cuenta).
 
 ## 4. Facturación (agregado el 25/09/2026)
 

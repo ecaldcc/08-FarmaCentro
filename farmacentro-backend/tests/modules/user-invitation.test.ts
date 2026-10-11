@@ -9,7 +9,7 @@ import {
   lastCodeFor,
   loginWithEmail,
   resetDatabase,
-  stepUpWithEmail,
+  stepUp,
   TestClient,
   type TestUser,
 } from '../helpers/app.js';
@@ -31,7 +31,7 @@ function invitationFor(email: string) {
 async function adminCreatesEmployee(): Promise<{ admin: TestClient; body: Record<string, unknown> }> {
   const adminUser = await createTestUser('admin');
   const admin = await loginWithEmail(adminUser);
-  await stepUpWithEmail(admin, adminUser, 'user.create', null);
+  await stepUp(admin, adminUser, 'user.create', null);
   const res = await admin.post('/api/users', EMPLOYEE);
   expect(res.status).toBe(201);
   return { admin, body: res.body as Record<string, unknown> };
@@ -110,7 +110,7 @@ describe('user invitation by e-mail (5.16, 5.17)', () => {
     const admin = await loginWithEmail(adminUser);
     const target = await createTestUser('bodeguero');
 
-    await stepUpWithEmail(admin, adminUser, 'user.password.reset', target.id);
+    await stepUp(admin, adminUser, 'user.password.reset', target.id);
     const res = await admin.post(`/api/users/${target.id}/password-reset`, { reason: 'El empleado olvidó su contraseña' });
     expect(res.status).toBe(200);
     expect(res.body.temporaryPassword).toBeUndefined();

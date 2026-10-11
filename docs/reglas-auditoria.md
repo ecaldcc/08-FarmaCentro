@@ -18,20 +18,20 @@ Cada persona entra con **su propia cuenta**. Las contraseñas no se escriben en 
 
 | Usuario | Rol | Para quién |
 |---|---|---|
-| `aud.regente` | Regente | Grupo auditor |
-| `aud.cajero` | Cajero | Grupo auditor |
-| `aud.bodeguero` | Bodeguero | Grupo auditor |
-| `aud.auditor` | Auditor | Grupo auditor |
-| `ing.sagastume` | Administrador | Ing. Omar Eduardo Sagastume Álvarez |
+| `ktobarm` | Administrador | Grupo auditor: crea las cuentas de cada rol que necesite para sus pruebas |
+| `osagastumea1` | Administrador | Ing. Omar Eduardo Sagastume Álvarez |
 | `admin` | Administrador | Equipo de desarrollo (cuenta compartida, ver D-31) |
+
+Para probar los demás roles, el grupo auditor crea desde `ktobarm` una cuenta por rol en *Usuarios → Nuevo usuario*. Con Gmail pueden usar un solo buzón: `correo+cajero@gmail.com`, `correo+regente@gmail.com`, etc. El Administrador no vende ni ve recetas (segregación de funciones), así que esas pruebas se hacen con las cuentas de Regente y Cajero.
 
 **Primer ingreso:**
 1. Llega un correo de FarmaCentro con el usuario y una **contraseña temporal válida 48 horas**. Si vence, pidan al equipo que use "Reenviar invitación".
 2. En https://farmacentro.netlify.app escriban el usuario y la contraseña temporal.
 3. Elijan "Enviarme un código por correo" y escriban el código de 6 dígitos (vence en 5 minutos).
 4. El sistema pide elegir una contraseña propia: mínimo 12 caracteres, que no contenga el usuario.
+5. En *Mi cuenta → App autenticadora*, configuren **Google Authenticator** o **Microsoft Authenticator**: se confirma una sola vez con un código por correo, se escanea el código QR y se escribe el código que muestra la app.
 
-Desde entonces, cada ingreso pide contraseña y código por correo. También se puede registrar una huella o el PIN de Windows Hello en *Mi cuenta*. Las operaciones sensibles (anular ventas, ajustar inventario, despachar controlados, cambiar roles) vuelven a pedir el segundo factor.
+Desde entonces, cada ingreso pide contraseña y código por correo (o huella). Las **operaciones críticas** (crear usuarios y cambiar roles, anular ventas, ajustar inventario, despachar controlados) piden el código de la **app autenticadora**, nunca un correo (decisión D-32). Sin la app configurada, esas operaciones no se pueden hacer.
 
 > **Primer acceso del día:** la API está en el plan gratuito de Render y se duerme tras 15 minutos sin uso. Si la primera carga falla, esperen un minuto y vuelvan a intentar.
 
@@ -41,6 +41,7 @@ Desde entonces, cada ingreso pide contraseña y código por correo. También se 
 - Intentar acciones no autorizadas desde la interfaz o llamando la API directamente con la sesión de una cuenta asignada (por ejemplo, que el Cajero intente anular una venta o ver recetas).
 - Probar validación de entradas e **inyección NoSQL** con cargas manuales (por ejemplo, `{"$ne": null}` en el usuario).
 - Probar el **bloqueo por intentos** solo sobre las cuentas propias: 5 contraseñas incorrectas bloquean la cuenta 15 minutos.
+- Probar la **app autenticadora**: que un código solo sirva una vez, que el correo no se acepte para operaciones críticas y que los códigos incorrectos cuenten para el bloqueo.
 - Probar la **expiración de sesión** (15 minutos de inactividad, 8 horas como máximo), el cierre de sesión y la re-autenticación.
 - Revisar cabeceras de seguridad, cookies, CORS y la verificación de origen con las herramientas del navegador.
 - Revisar la **bitácora** y los reportes con `aud.auditor`, exportar a CSV y verificar la cadena de hash contra el ancla.

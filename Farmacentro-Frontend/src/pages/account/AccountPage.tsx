@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { useStepUp } from '../../auth/StepUp';
 import { createCredential, describeWebAuthnError, webauthnSupported } from '../../auth/webauthn';
 import { Alert, Button, DateTime, Empty, ErrorAlert, Field, PageHeader } from '../../components/ui';
+import { AuthenticatorAppCard } from './AuthenticatorAppCard';
 import { ChangePasswordForm } from './ChangePasswordForm';
 
 /** C5 — My account (with C4: register a fingerprint). */
@@ -68,6 +69,7 @@ export function AccountPage() {
       {notice && <Alert kind="success">{notice}</Alert>}
       <ErrorAlert error={error} />
       <div className="grid-2">
+        <AuthenticatorAppCard onNotice={setNotice} />
         <section className="card">
           <h2>Huellas registradas</h2>
           <p className="muted">

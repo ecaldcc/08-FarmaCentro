@@ -27,7 +27,7 @@
 ## 3. Matriz de rol por acción
 
 Leyenda: **Sí** = permitido · **Parcial** = permitido con restricción (ver nota) · — = denegado (403 y evento `authz.denied`).
-**2FA** = exige re-autenticación (huella o, si se aprueba D-03, código por correo) inmediatamente antes de la operación.
+**2FA** = exige re-autenticación con la app autenticadora o la huella inmediatamente antes de la operación (D-32). El código por correo no sirve para estas operaciones.
 **Bitácora** = evento que se registra (catálogo en §4). "—" = no se registra (lecturas no sensibles).
 
 ### 3.1 Cuenta propia (todos los roles)
@@ -139,6 +139,7 @@ Leyenda: **Sí** = permitido · **Parcial** = permitido con restricción (ver no
 | `webauthn.credential.registered` / `.revoked` | success / failure | webauthn_credential | Alta o baja de una huella. |
 | `webauthn.counter.anomaly` | failure | webauthn_credential | El contador de firmas retrocedió (posible clonación). |
 | `user.created` / `user.updated` / `user.role.changed` / `user.disabled` / `user.enabled` | success / failure | user | Administración de cuentas (`fromRole`, `toRole`, `reason`). |
+| `totp.enrolled` / `totp.revoked` | success / failure | user | App autenticadora configurada, o eliminada por el dueño (`by: owner`) o por el Administrador (`by: admin`, `reason`). Nunca incluye el secreto ni códigos. |
 | `user.invitation.sent` | success / failure | user | Correo con usuario y contraseña temporal enviado al empleado al crear la cuenta o al restablecerla (`kind`, `expiresAt`). Nunca incluye la contraseña. |
 | `authz.denied` | denied | según ruta | Acceso por rol no autorizado o re-autenticación ausente. |
 | `security.origin.rejected` | denied | — | Escritura con `Origin` distinto de `CLIENT_ORIGIN`. |

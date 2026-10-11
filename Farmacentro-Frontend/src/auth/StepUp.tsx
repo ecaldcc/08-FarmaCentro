@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { ApiError, http } from '../api/http';
+import type { SecondFactorMethod } from '../api/types';
 import { Alert, Button, ErrorAlert, Field, Modal } from '../components/ui';
-import { useAuth } from './AuthContext';
 import { describeWebAuthnError, signChallenge, webauthnSupported } from './webauthn';
 
 export interface StepUpRequest {
@@ -18,6 +19,8 @@ interface StepUpContextValue {
 const StepUpContext = createContext<StepUpContextValue | null>(null);
 
 interface Pending extends StepUpRequest {
+  /** Methods the API accepts for this action and user (from the STEP_UP_REQUIRED answer). */
+  methods: SecondFactorMethod[];
   resolve: () => void;
   reject: (error: Error) => void;
 }
@@ -33,9 +36,9 @@ export function StepUpProvider({ children }: { children: ReactNode }) {
   const pendingRef = useRef<Pending | null>(null);
 
   const ask = useCallback(
-    (request: StepUpRequest) =>
+    (request: StepUpRequest, methods: SecondFactorMethod[]) =>
       new Promise<void>((resolve, reject) => {
-        const entry = { ...request, resolve, reject };
+        const entry = { ...request, methods, resolve, reject };
         pendingRef.current = entry;
         setPending(entry);
       }),
@@ -48,7 +51,7 @@ export function StepUpProvider({ children }: { children: ReactNode }) {
         return await operation();
       } catch (error) {
         if (!(error instanceof ApiError) || error.code !== 'STEP_UP_REQUIRED') throw error;
-        await ask(request);
+        await ask(request, (error.extra.methods as SecondFactorMethod[] | undefined) ?? []);
         return operation();
       }
     },
@@ -78,10 +81,11 @@ export function useStepUp(): StepUpContextValue {
 }
 
 /** C6 — "Esta operación requiere confirmar tu identidad". */
-function StepUpModal({ request, onDone, onCancel }: { request: StepUpRequest; onDone: () => void; onCancel: () => void }) {
-  const { session } = useAuth();
-  const allowEmail = session?.stepUpMethods.includes('email_otp') ?? false;
-  const hasFingerprint = session?.user.hasWebAuthn ?? false;
+function StepUpModal({ request, onDone, onCancel }: { request: Pending; onDone: () => void; onCancel: () => void }) {
+  const allowEmail = request.methods.includes('email_otp');
+  const hasTotp = request.methods.includes('totp');
+  const hasFingerprint = request.methods.includes('webauthn');
+  const [appCode, setAppCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [codeSentTo, setCodeSentTo] = useState<string | null>(null);
@@ -107,6 +111,12 @@ function StepUpModal({ request, onDone, onCancel }: { request: StepUpRequest; on
       onDone();
     });
 
+  const verifyAppCode = () =>
+    run(async () => {
+      await http.post('/auth/step-up/totp/verify', { ...target, code: appCode });
+      onDone();
+    });
+
   const sendCode = () =>
     run(async () => {
       const res = await http.post<{ sentTo: string }>('/auth/step-up/email-otp/send', target);
@@ -125,13 +135,41 @@ function StepUpModal({ request, onDone, onCancel }: { request: StepUpRequest; on
         La operación <strong>{request.label}</strong> requiere volver a verificar tu identidad. El permiso sirve para una
         sola operación y vence en 2 minutos.
       </p>
+      {hasTotp && (
+        <div className="stack">
+          <Field label="Código de tu app autenticadora">
+            {(id) => (
+              <input
+                id={id}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={appCode}
+                onChange={(e) => setAppCode(e.target.value.replace(/\D/g, ''))}
+              />
+            )}
+          </Field>
+          <Button onClick={verifyAppCode} disabled={appCode.length !== 6} busy={busy}>
+            Confirmar
+          </Button>
+        </div>
+      )}
       {hasFingerprint && webauthnSupported() && (
-        <Button onClick={useFingerprint} busy={busy}>
+        <Button variant={hasTotp ? 'secondary' : 'primary'} onClick={useFingerprint} busy={busy}>
           Usar mi huella
         </Button>
       )}
-      {!hasFingerprint && !allowEmail && (
-        <Alert kind="warning">Registra una huella en "Mi cuenta" para poder realizar operaciones sensibles.</Alert>
+      {request.methods.length === 0 && (
+        <Alert kind="warning">
+          Las operaciones críticas se confirman con la app autenticadora.{' '}
+          <Link to="/mi-cuenta" onClick={onCancel}>
+            Configúrala en Mi cuenta
+          </Link>{' '}
+          y vuelve a intentarlo.
+        </Alert>
+      )}
+      {allowEmail && (
+        <Alert kind="info">Como aún no tienes app autenticadora ni huella, esta vez confirmas con un código por correo.</Alert>
       )}
       {allowEmail && (
         <div className="stack">

@@ -13,9 +13,9 @@ declare module 'express-serve-static-core' {
  * operation (CLAUDE.md "Segundo factor"). Runs after validate(), so targetId comes from validated input.
  */
 export function requireStepUp(action: StepUpAction, targetId: (req: Request) => string | null = () => null) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      res.locals.stepUpMethod = consumeStepUp(req, action, targetId(req));
+      res.locals.stepUpMethod = await consumeStepUp(req, action, targetId(req));
       next();
     } catch (error) {
       next(error);

@@ -289,7 +289,7 @@ sequenceDiagram
     API-->>B: 200 venta anulada
 ```
 
-- Si el usuario elige código por correo: `POST /api/auth/step-up/email-otp/send { action, targetId }` y `…/verify { code }`, con las mismas reglas del §8.2 (propósito `step_up`, ligado a `action` + `targetId`). Si se permite o no el correo para operaciones sensibles es la decisión pendiente **D-03**.
+- Con la app autenticadora (D-32): `POST /api/auth/step-up/totp/verify { action, targetId, code }`. El código de correo (`…/step-up/email-otp/*`) solo se acepta para `webauthn.register` y `totp.enroll` cuando el usuario aún no tiene ningún factor fuerte.
 - Un fallo de re-autenticación genera `auth.stepup.failed` y cuenta para el bloqueo por intentos.
 - El permiso no se reutiliza: una segunda anulación exige otra huella.
 

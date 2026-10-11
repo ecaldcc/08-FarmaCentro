@@ -1,7 +1,7 @@
-npm audit — 2026-10-11T15:46:15.077Z
+npm audit — 2026-10-11T16:20:34.822Z
 
 [farmacentro-backend] dependencias analizadas: 406
   Críticas: 0 · Altas: 0 · Moderadas: 0 · Bajas: 0
 
-[Farmacentro-Frontend] dependencias analizadas: 189
+[Farmacentro-Frontend] dependencias analizadas: 190
   Críticas: 0 · Altas: 0 · Moderadas: 0 · Bajas: 0

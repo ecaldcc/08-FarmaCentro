@@ -49,8 +49,6 @@ services:
         sync: false
       - key: MAIL_FROM
         sync: false
-      - key: STEP_UP_ALLOW_EMAIL
-        value: "true"
       # Same value as API_SIGNATURE_TOKEN in Netlify (signed proxy).
       - key: NETLIFY_PROXY_SECRET
         sync: false

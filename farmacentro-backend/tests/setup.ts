@@ -14,7 +14,6 @@ process.env.BCRYPT_COST = '4';
 process.env.RP_ID = 'localhost';
 process.env.RP_NAME = 'FarmaCentro';
 process.env.MAIL_TRANSPORT = 'memory';
-process.env.STEP_UP_ALLOW_EMAIL = 'true';
 process.env.OTP_RESEND_SECONDS ??= '0';
 process.env.RATE_LIMIT_FACTOR ??= '100';
 process.env.LOG_LEVEL = 'silent';

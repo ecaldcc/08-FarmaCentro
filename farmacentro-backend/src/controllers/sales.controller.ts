@@ -115,7 +115,7 @@ export async function dispense(req: Request, res: Response): Promise<void> {
   const { params, body } = input<IdParams, unknown, DispenseInput>(req);
   let stepUpMethod: string | null = null;
   if (await prescriptions.dispensationRequiresStepUp(body)) {
-    stepUpMethod = consumeStepUp(req, 'prescription.dispense', params.id);
+    stepUpMethod = await consumeStepUp(req, 'prescription.dispense', params.id);
   }
   res
     .status(201)

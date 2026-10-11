@@ -746,3 +746,14 @@ select:disabled {
   margin: 0.25rem 0 0;
   max-width: 900px;
 }
+
+/* Authenticator app setup (D-32): the QR code keeps a white background in dark mode so phones can read it. */
+.qr-code {
+  display: block;
+  border-radius: 8px;
+  border: 1px solid var(--border, #d0d7de);
+}
+.steps {
+  margin: 0;
+  padding-left: 1.25rem;
+}

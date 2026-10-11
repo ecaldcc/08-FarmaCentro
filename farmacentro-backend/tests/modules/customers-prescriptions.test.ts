@@ -10,7 +10,7 @@ import {
   getApp,
   loginWithEmail,
   resetDatabase,
-  stepUpWithEmail,
+  stepUp,
 } from '../helpers/app.js';
 import { createLot, createProduct, isoDaysFromNow } from '../helpers/fixtures.js';
 
@@ -134,13 +134,13 @@ describe('prescriptions', () => {
     const noStepUp = await client.post(`/api/prescriptions/${id}/dispense`, body);
     expect(noStepUp.body.error.code).toBe('STEP_UP_REQUIRED');
 
-    await stepUpWithEmail(client, regente, 'prescription.dispense', id);
+    await stepUp(client, regente, 'prescription.dispense', id);
     const ok = await client.post(`/api/prescriptions/${id}/dispense`, body);
     expect(ok.status).toBe(201);
     expect(await Dispensation.countDocuments()).toBe(1);
     expect((await Prescription.findById(id).lean())?.status).toBe('partially_dispensed');
 
-    await stepUpWithEmail(client, regente, 'prescription.dispense', id);
+    await stepUp(client, regente, 'prescription.dispense', id);
     const tooMuch = await client.post(`/api/prescriptions/${id}/dispense`, body);
     expect(tooMuch.status).toBe(409);
   });

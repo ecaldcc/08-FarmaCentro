@@ -52,6 +52,14 @@ authRouter.post(
   auth.stepUpWebauthnVerify,
 );
 authRouter.post(
+  '/step-up/totp/verify',
+  mfaLimiter,
+  requireAuth(),
+  validate({ body: StepUpCodeBody }),
+  auth.stepUpTotpVerify,
+);
+// E-mailed code: only to register the first authenticator app or fingerprint (D-32).
+authRouter.post(
   '/step-up/email-otp/send',
   otpSendLimiter,
   requireAuth(),
@@ -82,3 +90,9 @@ meRouter.delete(
   requireStepUp('webauthn.revoke', paramId),
   me.revokeCredential,
 );
+
+// Authenticator app (D-32).
+meRouter.get('/totp', validate({}), me.getTotp);
+meRouter.post('/totp/setup', validate({}), requireStepUp('totp.enroll'), me.setupTotp);
+meRouter.post('/totp/confirm', mfaLimiter, validate({ body: CodeBody }), me.confirmTotp);
+meRouter.delete('/totp', validate({}), requireStepUp('totp.revoke'), me.removeTotp);

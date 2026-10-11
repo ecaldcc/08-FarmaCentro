@@ -7,7 +7,10 @@ import { ensureSchema } from '../../src/db/schema.js';
 import type { Role } from '../../src/domain/roles.js';
 import { User } from '../../src/models/User.js';
 import { sentMail } from '../../src/services/mail.service.js';
+import { encryptField } from '../../src/services/crypto.service.js';
 import { hashPassword } from '../../src/services/password.service.js';
+import { base32Decode, base32Encode, currentStep, totpCode } from '../../src/services/totp.service.js';
+import { randomBytes } from 'node:crypto';
 
 export const ORIGIN = 'http://localhost:5173';
 export const DEFAULT_PASSWORD = 'Prueba-Segura-2026';
@@ -134,7 +137,37 @@ export async function loginWithEmail(user: TestUser): Promise<TestClient> {
   return client;
 }
 
-/** Obtains a step-up grant with an e-mailed code. */
+/** Current code of a base32 TOTP secret (what the authenticator app would show). */
+export function codeFor(secretBase32: string, offsetSteps = 0): string {
+  return totpCode(base32Decode(secretBase32), currentStep() + offsetSteps);
+}
+
+const totpSecrets = new Map<string, string>();
+
+/** Test fixture: an authenticator app already configured for the user (stored encrypted, as in production). */
+export async function enrollTotp(user: TestUser): Promise<string> {
+  const secret = base32Encode(randomBytes(20));
+  await User.updateOne(
+    { _id: user.id },
+    { $set: { totpSecret: encryptField('users', user.id, 'totpSecret', secret), totpEnabledAt: new Date(), totpLastUsedStep: 0 } },
+  );
+  totpSecrets.set(user.id, secret);
+  return secret;
+}
+
+/**
+ * Obtains a step-up grant with the authenticator app (configured on first use). Each code is accepted
+ * only once per 30 seconds, so the fixture rewinds the last used step to allow several grants per test.
+ */
+export async function stepUp(client: TestClient, user: TestUser, action: string, targetId: string | null) {
+  const enrolled = (await User.findById(user.id, { totpEnabledAt: 1 }).lean())?.totpEnabledAt;
+  const secret = enrolled && totpSecrets.has(user.id) ? totpSecrets.get(user.id)! : await enrollTotp(user);
+  await User.updateOne({ _id: user.id }, { $set: { totpLastUsedStep: 0 } });
+  const res = await client.post('/api/auth/step-up/totp/verify', { action, targetId, code: codeFor(secret) });
+  if (res.status !== 200) throw new Error(`step-up failed: ${res.status} ${JSON.stringify(res.body)}`);
+}
+
+/** Obtains a step-up grant with an e-mailed code (only valid to register the first strong factor). */
 export async function stepUpWithEmail(client: TestClient, user: TestUser, action: string, targetId: string | null) {
   const sent = await client.post('/api/auth/step-up/email-otp/send', { action, targetId });
   if (sent.status !== 200) throw new Error(`step-up send failed: ${sent.status} ${JSON.stringify(sent.body)}`);

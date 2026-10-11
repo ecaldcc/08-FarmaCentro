@@ -1,11 +1,11 @@
 import type { RegistrationResponseJSON } from '@simplewebauthn/server';
 import type { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { env } from '../config/env.js';
 import { input } from '../middlewares/validate.js';
 import { WebAuthnCredential } from '../models/WebAuthnCredential.js';
 import { appendAudit } from '../services/audit.service.js';
 import { notifyUser } from '../services/mail.service.js';
+import { confirmEnrollment, revokeTotp, startEnrollment, totpStatus } from '../services/totp.service.js';
 import {
   activeCredentials,
   buildRegistrationOptions,
@@ -15,7 +15,7 @@ import {
 } from '../services/webauthn.service.js';
 import { Errors } from '../utils/httpError.js';
 import { auditContext } from '../utils/requestContext.js';
-import type { RegisterOptionsInput, WebAuthnRegisterVerifyInput } from '../validation/auth.schemas.js';
+import type { CodeInput, RegisterOptionsInput, WebAuthnRegisterVerifyInput } from '../validation/auth.schemas.js';
 
 function currentUser(req: Request) {
   if (!req.user) throw Errors.unauthenticated();
@@ -99,9 +99,6 @@ export async function revokeCredential(req: Request, res: Response): Promise<voi
   if (!target) {
     throw Errors.notFound();
   }
-  if (!env.STEP_UP_ALLOW_EMAIL && credentials.length === 1) {
-    throw Errors.conflict('No puedes revocar tu única huella: las operaciones sensibles la requieren.');
-  }
   await WebAuthnCredential.updateOne(
     { _id: target._id },
     { $set: { revokedAt: new Date(), revokedBy: new Types.ObjectId(user.id) } },
@@ -114,5 +111,27 @@ export async function revokeCredential(req: Request, res: Response): Promise<voi
     details: { nickname: target.nickname, by: 'owner' },
   });
   await notifyUser(user.email, 'huella revocada', `Se revocó la huella "${target.nickname}" de tu cuenta.`);
+  res.status(204).end();
+}
+
+// ------------------------------------------------------------------- authenticator app (D-32)
+
+export async function getTotp(req: Request, res: Response): Promise<void> {
+  res.json(await totpStatus(currentUser(req).id));
+}
+
+/** Route is protected by requireStepUp('totp.enroll'). Returns the secret once, for the QR code. */
+export async function setupTotp(req: Request, res: Response): Promise<void> {
+  res.json(await startEnrollment(currentUser(req)));
+}
+
+export async function confirmTotp(req: Request, res: Response): Promise<void> {
+  const { body } = input<unknown, unknown, CodeInput>(req);
+  res.json(await confirmEnrollment(currentUser(req), body.code, auditContext(req)));
+}
+
+/** Route is protected by requireStepUp('totp.revoke'). */
+export async function removeTotp(req: Request, res: Response): Promise<void> {
+  await revokeTotp(currentUser(req), 'owner', auditContext(req), { stepUpMethod: res.locals.stepUpMethod });
   res.status(204).end();
 }

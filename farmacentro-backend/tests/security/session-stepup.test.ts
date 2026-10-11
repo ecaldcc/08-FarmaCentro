@@ -7,7 +7,7 @@ import {
   getApp,
   loginWithEmail,
   resetDatabase,
-  stepUpWithEmail,
+  stepUp,
   TestClient,
 } from '../helpers/app.js';
 
@@ -108,7 +108,7 @@ describe('step-up re-authentication', () => {
     const client = await loginWithEmail(admin);
     const reason = { reason: 'Solicitud de soporte técnico' };
 
-    await stepUpWithEmail(client, admin, 'user.unlock', a.id);
+    await stepUp(client, admin, 'user.unlock', a.id);
     // Bound to the record: cannot be used for user B.
     expect((await client.post(`/api/users/${b.id}/unlock`, reason)).body.error.code).toBe('STEP_UP_REQUIRED');
     // Bound to the action: cannot be used to reset A's password.
@@ -122,7 +122,7 @@ describe('step-up re-authentication', () => {
     const admin = await createTestUser('admin');
     const target = await createTestUser('cajero');
     const client = await loginWithEmail(admin);
-    await stepUpWithEmail(client, admin, 'user.unlock', target.id);
+    await stepUp(client, admin, 'user.unlock', target.id);
     await editSession((data) => {
       (data.stepUpGrant as { expiresAt: number }).expiresAt = Date.now() - 1;
     });
@@ -134,7 +134,7 @@ describe('step-up re-authentication', () => {
     const admin = await createTestUser('admin');
     const client = await loginWithEmail(admin);
     const body = { role: 'cajero', reason: 'Cambio de funciones en la sucursal' };
-    await stepUpWithEmail(client, admin, 'user.role.change', admin.id);
+    await stepUp(client, admin, 'user.role.change', admin.id);
     const self = await client.put(`/api/users/${admin.id}/role`, body);
     expect(self.status).toBe(409);
   });

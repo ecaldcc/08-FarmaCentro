@@ -1,6 +1,5 @@
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import type { Request, Response } from 'express';
-import { env } from '../config/env.js';
 import { PERMISSIONS } from '../domain/roles.js';
 import { sessionExpiresAt } from '../middlewares/auth.js';
 import { input } from '../middlewares/validate.js';
@@ -12,7 +11,8 @@ import {
   verifyFirstFactor,
 } from '../services/auth.service.js';
 import { sendOtp, verifyOtp } from '../services/otp.service.js';
-import { allowedStepUpMethods, grantStepUp } from '../services/stepUp.service.js';
+import { assertMethodAllowed, availableStepUpMethods, grantStepUp } from '../services/stepUp.service.js';
+import { hasTotp, verifyCode } from '../services/totp.service.js';
 import {
   buildAuthenticationOptions,
   CHALLENGE_TTL_MS,
@@ -45,9 +45,10 @@ async function describeSession(req: Request) {
       role: user.role,
       mustChangePassword: user.mustChangePassword,
       hasWebAuthn: await hasActiveCredential(user.id),
+      hasTotp: await hasTotp(user.id),
     },
     permissions: PERMISSIONS[user.role],
-    stepUpMethods: allowedStepUpMethods(),
+    stepUpMethods: await availableStepUpMethods(user.id),
     sessionExpiresAt: sessionExpiresAt(),
   };
 }
@@ -231,12 +232,11 @@ export async function stepUpWebauthnVerify(req: Request, res: Response): Promise
   res.json({ action, targetId, grantExpiresAt: new Date(grant.expiresAt).toISOString() });
 }
 
+/** Only to register the first authenticator app or fingerprint (D-32); never for critical operations. */
 export async function stepUpEmailSend(req: Request, res: Response): Promise<void> {
-  if (!env.STEP_UP_ALLOW_EMAIL) {
-    throw Errors.forbidden();
-  }
   const user = currentUser(req);
   const { body } = input<unknown, unknown, StepUpTargetInput>(req);
+  await assertMethodAllowed(user.id, body.action, 'email_otp');
   const result = await sendOtp(
     user,
     { purpose: 'step_up', action: body.action, targetId: body.targetId },
@@ -246,11 +246,9 @@ export async function stepUpEmailSend(req: Request, res: Response): Promise<void
 }
 
 export async function stepUpEmailVerify(req: Request, res: Response): Promise<void> {
-  if (!env.STEP_UP_ALLOW_EMAIL) {
-    throw Errors.forbidden();
-  }
   const user = currentUser(req);
   const { body } = input<unknown, unknown, StepUpTargetInput & CodeInput>(req);
+  await assertMethodAllowed(user.id, body.action, 'email_otp');
   const binding = { purpose: 'step_up' as const, action: body.action, targetId: body.targetId };
   const ok = await verifyOtp(user, binding, body.code, auditContext(req));
   if (!ok) {
@@ -267,6 +265,30 @@ export async function stepUpEmailVerify(req: Request, res: Response): Promise<vo
     entity: 'user',
     entityId: user.id,
     details: { stepUpAction: body.action, targetId: body.targetId, method: 'email_otp' },
+  });
+  res.json({ action: body.action, targetId: body.targetId, grantExpiresAt: new Date(grant.expiresAt).toISOString() });
+}
+
+/** Authenticator app (TOTP): each code is accepted once, and a wrong one counts towards the lockout. */
+export async function stepUpTotpVerify(req: Request, res: Response): Promise<void> {
+  const user = currentUser(req);
+  const { body } = input<unknown, unknown, StepUpTargetInput & CodeInput>(req);
+  const outcome = await verifyCode(user.id, body.code);
+  if (!outcome.ok) {
+    await failSecondFactor(req, 'auth.stepup.failed', {
+      method: 'totp',
+      reason: outcome.reason,
+      stepUpAction: body.action,
+      targetId: body.targetId,
+    });
+  }
+  const grant = grantStepUp(req, body.action, body.targetId, 'totp');
+  await appendAudit(auditContext(req), {
+    action: 'auth.stepup.granted',
+    result: 'success',
+    entity: 'user',
+    entityId: user.id,
+    details: { stepUpAction: body.action, targetId: body.targetId, method: 'totp' },
   });
   res.json({ action: body.action, targetId: body.targetId, grantExpiresAt: new Date(grant.expiresAt).toISOString() });
 }

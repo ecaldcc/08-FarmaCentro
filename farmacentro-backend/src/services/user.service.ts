@@ -9,6 +9,7 @@ import type { CreateUserInput, ListUsersInput, UpdateUserInput } from '../valida
 import { appendAudit, runAuditedTransaction, type AuditContext } from './audit.service.js';
 import { isLocked } from './lockout.service.js';
 import { sendInvitation, temporaryPasswordExpiry } from './invitation.service.js';
+import { revokeTotp } from './totp.service.js';
 import { notifyUser } from './mail.service.js';
 import { generateTemporaryPassword, hashPassword } from './password.service.js';
 
@@ -25,6 +26,7 @@ function toDto(user: LeanUser, credentialCount: number) {
     locked: isLocked(user.lockedUntil),
     lockedUntil: user.lockedUntil,
     hasWebAuthn: credentialCount > 0,
+    hasTotp: Boolean(user.totpEnabledAt),
     mustChangePassword: user.mustChangePassword,
     temporaryPasswordExpiresAt: user.mustChangePassword ? (user.temporaryPasswordExpiresAt ?? null) : null,
     lastLoginAt: user.lastLoginAt,
@@ -286,4 +288,13 @@ export async function revokeUserCredential(
     details: { userId, nickname: result.nickname, reason, stepUpMethod, by: 'admin' },
   });
   await notifyUser(target.email, 'huella revocada', `El Administrador revocó la huella "${result.nickname}" de tu cuenta.`);
+}
+
+/** Lost phone: removes the user's authenticator app so it can be configured again (D-32). */
+export async function revokeUserTotp(userId: string, reason: string, actorId: string, ctx: AuditContext, stepUpMethod: string) {
+  const target = await findUserOr404(userId);
+  if (String(target._id) === actorId) {
+    throw Errors.conflict('Para tu propia app autenticadora usa Mi cuenta.');
+  }
+  await revokeTotp({ id: String(target._id), email: target.email }, 'admin', ctx, { reason, stepUpMethod });
 }

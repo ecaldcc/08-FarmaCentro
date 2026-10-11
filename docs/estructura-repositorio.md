@@ -128,6 +128,7 @@ AES-256-GCM, HMAC, SHA-256 y los números aleatorios salen de `node:crypto`, sin
 | `react` / `react-dom` | 19.3.0 | prod | Interfaz |
 | `react-router` | 7.18.4 | prod | Navegación por rol |
 | `@simplewebauthn/browser` | 14.0.0 | prod | WebAuthn desde el navegador |
+| `qrcode-generator` | 2.0.4 | prod | Código QR de la app autenticadora (sin dependencias) |
 | `vite` / `@vitejs/plugin-react` | 8.3.1 / 6.1.1 | dev | Servidor de desarrollo con proxy y compilación |
 | `typescript` | 6.0.3 | dev | Compilador |
 | `eslint` y plugins (incluye `eslint-plugin-react-hooks` 7.1.1) | — | dev | Calidad y reglas de seguridad del cliente |
@@ -151,7 +152,7 @@ Se evitan librerías de componentes, de estado global y de peticiones: menos dep
 | `BCRYPT_COST` | 12 como mínimo |
 | `RP_ID`, `RP_NAME` | Dominio y nombre para WebAuthn |
 | `MAIL_TRANSPORT`, `SMTP_*`, `MAIL_FROM` | `console` en desarrollo (los códigos se ven en la terminal); `smtp` fuera de desarrollo |
-| `STEP_UP_ALLOW_EMAIL` | Si el código por correo sirve para re-autenticación (D-03) |
+| ~~`STEP_UP_ALLOW_EMAIL`~~ | Eliminada el 11/10/2026: el correo ya no sirve para operaciones críticas (D-32) |
 | `SERVE_CLIENT`, `CLIENT_DIST` | Servir el frontend compilado desde la API (un solo origen) |
 | `LOG_LEVEL` | `info` por defecto |
 

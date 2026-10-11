@@ -35,7 +35,6 @@ export const EnvSchema = z
     SMTP_USER: z.string().optional(),
     SMTP_PASS: z.string().optional(),
     MAIL_FROM: z.string().default('FarmaCentro <no-reply@farmacentro.local>'),
-    STEP_UP_ALLOW_EMAIL: boolFromString.default(true),
     OTP_RESEND_SECONDS: z.coerce.number().int().min(0).max(600).default(60),
     RATE_LIMIT_FACTOR: z.coerce.number().int().min(1).max(1000).default(1),
     // Shared secret of the signed Netlify proxy (netlify.toml `signed = "API_SIGNATURE_TOKEN"`).

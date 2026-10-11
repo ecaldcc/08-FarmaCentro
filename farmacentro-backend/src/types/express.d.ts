@@ -3,7 +3,7 @@ import type { Role } from '../domain/roles.js';
 import type { StepUpAction } from '../domain/stepUpActions.js';
 
 export type AuthStage = 'password' | 'authenticated';
-export type SecondFactorMethod = 'webauthn' | 'email_otp';
+export type SecondFactorMethod = 'webauthn' | 'email_otp' | 'totp';
 
 export interface WebAuthnChallenge {
   value: string;

@@ -56,3 +56,9 @@ usersRouter.delete(
   requireStepUp('user.webauthn.revoke', paramId),
   users.revokeCredential,
 );
+usersRouter.delete(
+  '/:id/totp',
+  validate({ params: IdParams, body: ReasonBody }),
+  requireStepUp('user.totp.revoke', paramId),
+  users.revokeTotp,
+);

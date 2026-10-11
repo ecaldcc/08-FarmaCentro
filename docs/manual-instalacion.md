@@ -152,7 +152,7 @@ Netlify reenvía `/api/*` a Render. Así el navegador solo habla con el dominio 
 | `BREVO_API_KEY` | La API key de Brevo |
 | `MAIL_FROM` | `FarmaCentro <remitente-verificado@gmail.com>` |
 
-   Los demás valores ya vienen en `render.yaml`: `NODE_ENV=production`, `MAIL_TRANSPORT=brevo`, `TRUST_PROXY=4`, `STEP_UP_ALLOW_EMAIL=true` (decisión D-03), Node 22.16.0.
+   Los demás valores ya vienen en `render.yaml`: `NODE_ENV=production`, `MAIL_TRANSPORT=brevo`, `TRUST_PROXY=4`, Node 22.16.0.
 3. Cuando termine el despliegue, abre `https://zero8-farmacentro-backend.onrender.com/api/health`: debe responder `{"status":"ok"}`. Si Render asignó otra URL (por ejemplo con un sufijo), cópiala para el paso siguiente.
 
 ### 5.4 Frontend en Netlify

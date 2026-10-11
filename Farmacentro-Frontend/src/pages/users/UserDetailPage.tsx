@@ -11,6 +11,7 @@ type Dialog =
   | { kind: 'status' }
   | { kind: 'unlock' }
   | { kind: 'reset' }
+  | { kind: 'totp' }
   | { kind: 'revoke'; credentialId: string; nickname: string }
   | { kind: 'edit' }
   | null;
@@ -104,6 +105,16 @@ export function UserDetailPage() {
           </div>
         </section>
         <section className="card">
+          <h2>App autenticadora</h2>
+          <p>{user.hasTotp ? <Badge tone="success">Configurada</Badge> : <span className="muted">No configurada</span>}</p>
+          {user.hasTotp && (
+            <Button variant="danger" small onClick={() => setDialog({ kind: 'totp' })} disabled={isSelf}>
+              Restablecer app autenticadora
+            </Button>
+          )}
+          <p className="muted small">
+            Restablécela si el empleado perdió o cambió su celular; después la configura de nuevo en Mi cuenta.
+          </p>
           <h2>Huellas registradas</h2>
           {user.credentials.length === 0 ? (
             <p className="muted">Sin huellas registradas.</p>
@@ -160,6 +171,23 @@ export function UserDetailPage() {
               user.status === 'active' ? 'Deshabilitar usuario' : 'Habilitar usuario',
               () => http.put(`/users/${user.id}/status`, { status: user.status === 'active' ? 'disabled' : 'active', reason }),
               'Estado actualizado.',
+            )
+          }
+        />
+      )}
+      {dialog?.kind === 'totp' && (
+        <ReasonDialog
+          title="Restablecer app autenticadora"
+          description={<p>El usuario no podrá confirmar operaciones críticas hasta configurarla de nuevo en Mi cuenta.</p>}
+          confirmLabel="Restablecer"
+          danger
+          onClose={() => setDialog(null)}
+          onConfirm={(reason) =>
+            act(
+              'user.totp.revoke',
+              'Restablecer app autenticadora',
+              () => http.delete(`/users/${user.id}/totp`, { reason }),
+              'App autenticadora restablecida.',
             )
           }
         />

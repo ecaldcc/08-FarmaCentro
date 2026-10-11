@@ -10,7 +10,7 @@ import {
   getApp,
   loginWithEmail,
   resetDatabase,
-  stepUpWithEmail,
+  stepUp,
 } from '../helpers/app.js';
 import { createLot, createProduct, isoDaysFromNow } from '../helpers/fixtures.js';
 
@@ -148,11 +148,11 @@ describe('inventory and counter sales', () => {
     expect(noStepUp.status).toBe(403);
     expect(noStepUp.body.error.code).toBe('STEP_UP_REQUIRED');
 
-    await stepUpWithEmail(client, regente, 'sale.void', sale.body.id);
+    await stepUp(client, regente, 'sale.void', sale.body.id);
     const voided = await client.post(`/api/sales/${sale.body.id}/void`, { reason: 'Cliente devolvió el producto' });
     expect(voided.status).toBe(200);
     expect(voided.body.status).toBe('voided');
-    expect(voided.body.void.stepUpMethod).toBe('email_otp');
+    expect(voided.body.void.stepUpMethod).toBe('totp');
     expect((await InventoryLot.findById(lot._id).lean())?.quantity).toBe(10);
     expect(await InventoryMovement.countDocuments({ type: 'sale_void' })).toBe(1);
     expect((await verifyAuditChain()).ok).toBe(true);
@@ -168,13 +168,13 @@ describe('inventory and counter sales', () => {
 
     const body = { lotId: String(lot._id), quantityDelta: -2, reasonCode: 'damaged', reason: 'Cajas dañadas por humedad' };
     expect((await client.post('/api/inventory/adjustments', body)).body.error.code).toBe('STEP_UP_REQUIRED');
-    await stepUpWithEmail(client, bodeguero, 'inventory.adjust', String(lot._id));
+    await stepUp(client, bodeguero, 'inventory.adjust', String(lot._id));
     const ok = await client.post('/api/inventory/adjustments', body);
     expect(ok.status).toBe(201);
     expect(ok.body.lot.quantity).toBe(8);
 
     const controlledBody = { ...body, lotId: String(controlledLot._id) };
-    await stepUpWithEmail(client, bodeguero, 'inventory.adjust', String(controlledLot._id));
+    await stepUp(client, bodeguero, 'inventory.adjust', String(controlledLot._id));
     expect((await client.post('/api/inventory/adjustments', controlledBody)).status).toBe(403);
     expect((await InventoryLot.findById(controlledLot._id).lean())?.quantity).toBe(10);
   });
