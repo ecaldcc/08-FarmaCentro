@@ -27,6 +27,8 @@
     "verify-audit:prod": "tsx scripts/verify-audit-chain.ts --env=.env.production",
     "set-user-email": "tsx scripts/set-user-email.ts",
     "set-user-email:prod": "tsx scripts/set-user-email.ts --env=.env.production",
+    "set-user-status": "tsx scripts/set-user-status.ts",
+    "set-user-status:prod": "tsx scripts/set-user-status.ts --env=.env.production",
     "atlas:provision": "tsx scripts/atlas-provision.ts --env=.env.production"
   },
   "dependencies": {

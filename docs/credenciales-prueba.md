@@ -26,3 +26,5 @@ Los correos `@farmacentro.test` no existen: en desarrollo (`MAIL_TRANSPORT=conso
 ## Despliegue para el grupo auditor
 
 Las credenciales del ambiente desplegado **no se escriben en este repositorio**. Allí los correos deben ser reales, porque el código se envía por correo (API de Brevo). La cuenta `admin` recibe sus códigos en `farmacentro053@gmail.com`. Se entregan al grupo auditor por un canal privado, junto con el ancla de la bitácora (decisión D-10).
+
+Las cuentas del ambiente desplegado, cómo es el primer ingreso y qué pruebas están permitidas están en [reglas-auditoria.md](reglas-auditoria.md). Las cuentas demo sembradas (`regente`, `cajero`, `bodeguero`, `auditor`) están **deshabilitadas** en producción (D-31).

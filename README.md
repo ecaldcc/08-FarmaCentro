@@ -107,6 +107,7 @@ Abre **http://localhost:5173** en Chrome o Edge. Las credenciales de prueba est�
 | `npm run verify-audit` | Verifica la cadena de hash de la bitácora directamente en la base |
 | `npm run check-db-privileges` | Evidencia de que el usuario de la API no puede modificar ni borrar la bitácora (Atlas) |
 | `npm run backup` / `npm run restore-test` | Respaldo cifrado y prueba de restauración (simulado) |
+| `npm run set-user-status` / `npm run set-user-email` | Deshabilitar o habilitar cuentas y cambiar el correo de una cuenta, con registro en la bitácora (`:prod` para Atlas) |
 
 ## Documentación
 
@@ -123,6 +124,7 @@ Abre **http://localhost:5173** en Chrome o Edge. Las credenciales de prueba est�
 | [manual-instalacion.md](docs/manual-instalacion.md) | Instalación local, Atlas y despliegue |
 | [credenciales-prueba.md](docs/credenciales-prueba.md) | Usuarios de prueba (solo desarrollo local) |
 | [decisiones-pendientes.md](docs/decisiones-pendientes.md) | Supuestos, decisiones tomadas y preguntas abiertas |
+| [reglas-auditoria.md](docs/reglas-auditoria.md) | **Para el grupo auditor:** cuentas, primer ingreso, pruebas permitidas y formato de hallazgos |
 
 ## Fuera de alcance (solo documentado)
 
