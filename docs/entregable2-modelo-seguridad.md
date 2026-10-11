@@ -187,17 +187,17 @@ El proyecto consiste en implementar un SGSI conforme a ISO/IEC 27001:2022. Esta 
 
 *Nota.* Adaptado de Calderón Cinco et al. (2026b).
 
-**Seguridad desde el diseño.** Como el sistema de gestión todavía no existe, la seguridad se incorpora desde el diseño: contraseñas almacenadas con BCrypt (Provos y Mazières, 1999); validación de entradas con esquemas y saneamiento de filtros para evitar la inyección NoSQL (Open Worldwide Application Security Project \[OWASP\], 2025); segundo factor con huella verificada en el propio dispositivo mediante WebAuthn (World Wide Web Consortium \[W3C\], 2021) como primera opción y código temporal por SMS o correo como alternativa (*Selección y Justificación de Métodos de Segundo Factor de Autenticación*, 2026; Sagastume Álvarez, 2026); sesiones con cookies seguras y HTTPS; roles con mínimo privilegio; bitácora que registre quién hizo qué, cuándo y desde qué equipo, y datos de salud en una colección propia con campos cifrados. Además, el sistema nunca almacenará números de tarjeta: el cobro lo hace la terminal certificada del procesador, lo que reduce el alcance de PCI DSS.
+**Seguridad desde el diseño.** Como el sistema de gestión todavía no existe, la seguridad se incorpora desde el diseño: contraseñas almacenadas con BCrypt (Provos y Mazières, 1999); validación de entradas con esquemas y saneamiento de filtros para evitar la inyección NoSQL (Open Worldwide Application Security Project \[OWASP\], 2025); segundo factor en dos niveles: al iniciar sesión, código temporal por correo o huella verificada en el propio dispositivo mediante WebAuthn (World Wide Web Consortium \[W3C\], 2021), y en las operaciones sensibles, una aplicación autenticadora con códigos de un solo uso basados en el tiempo (TOTP; M'Raihi et al., 2011) o la huella, nunca el correo (*Selección y Justificación de Métodos de Segundo Factor de Autenticación*, 2026; Sagastume Álvarez, 2026); sesiones con cookies seguras y HTTPS; roles con mínimo privilegio; bitácora que registre quién hizo qué, cuándo y desde qué equipo, y datos de salud en una colección propia con campos cifrados. Además, el sistema nunca almacenará números de tarjeta: el cobro lo hace la terminal certificada del procesador, lo que reduce el alcance de PCI DSS.
 
 2.2 Viabilidad Técnica y Operativa de la Solución
 
 Viabilidad Técnica
 
-La solución es viable técnicamente porque usa tecnologías maduras, disponibles en Guatemala y que no requieren un centro de datos propio. Las terminales con cifrado punto a punto las provee el procesador de pagos; la segmentación se logra con un firewall de gama pyme y un switch administrable por sucursal; el antimalware gestionado, como Microsoft Defender for Business, se administra desde la nube, y la base de datos se aloja en MongoDB Atlas, cuyo plan gratuito es administrado y cifra los datos en reposo y en tránsito. El desarrollo usa TypeScript, React, Node.js y MongoDB, herramientas gratuitas y ampliamente documentadas, y la huella se valida con WebAuthn, un estándar que los navegadores y Windows Hello ya soportan, sin necesidad de un SDK propietario.
+La solución es viable técnicamente porque usa tecnologías maduras, disponibles en Guatemala y que no requieren un centro de datos propio. Las terminales con cifrado punto a punto las provee el procesador de pagos; la segmentación se logra con un firewall de gama pyme y un switch administrable por sucursal; el antimalware gestionado, como Microsoft Defender for Business, se administra desde la nube, y la base de datos se aloja en MongoDB Atlas, cuyo plan gratuito es administrado y cifra los datos en reposo y en tránsito. El desarrollo usa TypeScript, React, Node.js y MongoDB, herramientas gratuitas y ampliamente documentadas, y la huella se valida con WebAuthn, un estándar que los navegadores y Windows Hello ya soportan, sin necesidad de un SDK propietario. Los códigos de la aplicación autenticadora siguen el estándar abierto TOTP, compatible con Google Authenticator y Microsoft Authenticator, que son gratuitas.
 
 Viabilidad Operativa
 
-El mayor peligro de un control de seguridad es que el personal lo evite porque le estorba. Por eso la fricción es proporcional al riesgo: la verificación biométrica tarda segundos y se exige en operaciones sensibles, como anular ventas, ajustar inventario o despachar medicamentos controlados (*Selección y Justificación de Métodos de Segundo Factor de Autenticación*, 2026). El enlace de respaldo y el modo de contingencia evitan que una falla de Internet detenga la venta, y el piloto permite capacitar al personal por grupos.
+El mayor peligro de un control de seguridad es que el personal lo evite porque le estorba. Por eso la fricción es proporcional al riesgo: confirmar con la huella o con el código de la aplicación autenticadora tarda segundos, no depende de que llegue un correo y se exige en operaciones sensibles, como anular ventas, ajustar inventario o despachar medicamentos controlados (*Selección y Justificación de Métodos de Segundo Factor de Autenticación*, 2026). El enlace de respaldo y el modo de contingencia evitan que una falla de Internet detenga la venta, y el piloto permite capacitar al personal por grupos.
 
 Viabilidad Económica
 
@@ -271,7 +271,7 @@ El modelo combina normas de la International Organization for Standardization (I
 | ISO/IEC 27701:2025                                 | Gestión de la privacidad              | Guatemala aún no tiene una ley general de datos personales.            |
 | ISO/IEC 27035-1:2023 e ISO 22301:2019              | Incidentes y continuidad              | Dan estructura a la respuesta y a la continuidad del POS.              |
 | PCI DSS v4.0.1                                     | Seguridad de datos de tarjetas        | Es obligatorio para comercios que aceptan tarjetas.                    |
-| NIST SP 800-63B-4, WebAuthn e ISO/IEC 30107-3:2023 | Autenticación y biometría             | Sustentan el diseño del segundo factor.                                |
+| NIST SP 800-63B-4, WebAuthn, TOTP (RFC 6238) e ISO/IEC 30107-3:2023 | Autenticación y biometría | Sustentan el diseño del segundo factor.                                |
 | OWASP Top 10:2025                                  | Desarrollo seguro                     | Guía la codificación y las pruebas del sistema.                        |
 
 *Nota.* Elaboración propia con base en ISO (2019, 2025), ISO/IEC (2022a, 2022b, 2022c, 2023a, 2023b, 2025), OWASP (2025), PCI Security Standards Council (2024), Temoshok et al. (2025) y W3C (2021).
@@ -408,7 +408,7 @@ La Tabla 12 resume la declaración de aplicabilidad: cómo se aplica cada contro
 |--------------------------------------|--------------------------------------------------------------------------------------------------------|-------------------------------------|-------------|
 | 5.1 Políticas                        | Política general, de contraseñas, uso aceptable y respaldo                                             | Documento firmado y revisión anual  | Todos       |
 | 5.15, 5.18 Control de acceso         | Roles (cajero, regente, bodeguero, administrador, auditor) con mínimo privilegio y revisión trimestral | Matriz de roles y actas             | R03, R10    |
-| 5.17, 8.5 Autenticación segura       | bcrypt, huella con WebAuthn, código alterno y bloqueo por intentos                                     | Configuración y bitácora de accesos | R02, R03    |
+| 5.17, 8.5 Autenticación segura       | bcrypt; código por correo o huella (WebAuthn) al iniciar sesión; aplicación autenticadora (TOTP) o huella en operaciones sensibles; bloqueo por intentos | Configuración y bitácora de accesos | R02, R03    |
 | 5.19–5.22 Proveedores                | Cláusulas de seguridad y evidencias de cumplimiento                                                    | Contratos y certificados            | R14         |
 | 5.24–5.28 Incidentes                 | Procedimiento basado en ISO/IEC 27035-1                                                                | Registro e informes de incidentes   | R01, R02    |
 | 5.29, 5.30 Continuidad TIC           | Modo de contingencia del POS y enlace de respaldo                                                      | Pruebas de continuidad              | R09, R12    |
@@ -431,7 +431,7 @@ Complementos de las Demás Normas
 
 **Incidentes y continuidad.** El procedimiento sigue las fases de ISO/IEC 27035-1:2023: planificar y prepararse, detectar y reportar, evaluar y decidir, responder y aprender (ISO/IEC, 2023b). Si la consola alerta de un ransomware en una caja, el equipo se aísla a distancia, la sucursal pasa a contingencia, se restaura desde el respaldo y se documenta la causa. Conforme a ISO 22301:2019, el sistema central debe recuperarse en cuatro horas o menos, con una pérdida de datos no mayor a 24 horas (ISO, 2019).
 
-**Pagos y autenticación.** Con terminales P2PE, la tarjeta viaja cifrada hasta el procesador y nunca pasa en claro por FarmaCentro, lo que reduce el alcance de PCI DSS; aun así se mantienen la autenticación multifactor para accesos administrativos, la revisión de bitácoras y los escaneos de vulnerabilidades (PCI Security Standards Council, 2024). El NIST trata los códigos por SMS como un autenticador de uso restringido (Temoshok et al., 2025); por eso el código queda como alternativa y las operaciones sensibles exigen la huella mediante WebAuthn, que compara el rasgo en el dispositivo y solo envía al servidor una firma (W3C, 2021); los lectores deben contar con detección de ataques de presentación según ISO/IEC 30107-3:2023 (ISO/IEC, 2023a).
+**Pagos y autenticación.** Con terminales P2PE, la tarjeta viaja cifrada hasta el procesador y nunca pasa en claro por FarmaCentro, lo que reduce el alcance de PCI DSS; aun así se mantienen la autenticación multifactor para accesos administrativos, la revisión de bitácoras y los escaneos de vulnerabilidades (PCI Security Standards Council, 2024). El NIST trata los códigos por SMS como un autenticador de uso restringido (Temoshok et al., 2025); por eso el sistema no usa SMS: el código por correo sirve solo para iniciar sesión, y las operaciones sensibles exigen un código de la aplicación autenticadora, que cambia cada 30 segundos y se acepta una sola vez (M'Raihi et al., 2011), o la huella mediante WebAuthn, que compara el rasgo en el dispositivo y solo envía al servidor una firma (W3C, 2021); los lectores deben contar con detección de ataques de presentación según ISO/IEC 30107-3:2023 (ISO/IEC, 2023a).
 
 Indicadores para la Auditoría
 
@@ -468,7 +468,7 @@ Recomendaciones
 
 3.  Probar los respaldos cada mes y hacer al menos un simulacro de incidente al año.
 
-4.  Evaluar a mediano plazo reemplazar el código por correo por una aplicación autenticadora o llaves de acceso (*passkeys*).
+4.  Evaluar a mediano plazo extender la aplicación autenticadora o las llaves de acceso (*passkeys*) también al inicio de sesión, para dejar el código por correo solo como respaldo.
 
 5.  Confirmar el presupuesto con cotizaciones locales y dar seguimiento a las iniciativas de ley de protección de datos en Guatemala.
 
@@ -497,6 +497,8 @@ Glosario
 **Riesgo residual.** Nivel de riesgo que permanece después de aplicar los controles.
 
 **SGSI.** Sistema de Gestión de Seguridad de la Información, según ISO/IEC 27001.
+
+**TOTP.** Contraseña de un solo uso basada en el tiempo: la aplicación autenticadora del celular genera un código de 6 dígitos que cambia cada 30 segundos.
 
 **VLAN.** Segmento lógico que separa el tráfico de distintos grupos de equipos en la misma red física.
 
@@ -531,6 +533,8 @@ International Organization for Standardization e International Electrotechnical 
 International Organization for Standardization e International Electrotechnical Commission. (2023b). *Information technology — Information security incident management — Part 1: Principles and process* (ISO/IEC 27035-1:2023).
 
 International Organization for Standardization e International Electrotechnical Commission. (2025). *Information security, cybersecurity and privacy protection — Privacy information management systems — Requirements and guidance* (ISO/IEC 27701:2025).
+
+M'Raihi, D., Machani, S., Pei, M. y Rydell, J. (2011). *TOTP: Time-based one-time password algorithm* (RFC 6238). Internet Engineering Task Force. https://www.rfc-editor.org/rfc/rfc6238
 
 Open Worldwide Application Security Project. (2025). *OWASP Top 10:2025*. https://owasp.org/Top10/2025/
 
