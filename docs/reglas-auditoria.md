@@ -24,6 +24,8 @@ Cada persona entra con **su propia cuenta**. Las contraseñas no se escriben en 
 
 Para probar los demás roles, el grupo auditor crea desde `ktobarm` una cuenta por rol en *Usuarios → Nuevo usuario*. Con Gmail pueden usar un solo buzón: `correo+cajero@gmail.com`, `correo+regente@gmail.com`, etc. El Administrador no vende ni ve recetas (segregación de funciones), así que esas pruebas se hacen con las cuentas de Regente y Cajero.
 
+Las demás cuentas que aparecen en *Usuarios* (`henrynan`, `canchenan` y las cuentas demo deshabilitadas `regente`, `cajero`, `bodeguero` y `auditor`) no son parte de la auditoría.
+
 **Primer ingreso:**
 1. Llega un correo de FarmaCentro con el usuario y una **contraseña temporal válida 48 horas**. Si vence, pidan al equipo que use "Reenviar invitación".
 2. En https://farmacentro.netlify.app escriban el usuario y la contraseña temporal.
@@ -40,11 +42,11 @@ Desde entonces, cada ingreso pide contraseña y código por correo (o huella). L
 - Recorrer todas las funciones con las cuentas asignadas y verificar que cada rol solo pueda hacer lo que dice la [matriz de roles](roles-permisos.md).
 - Intentar acciones no autorizadas desde la interfaz o llamando la API directamente con la sesión de una cuenta asignada (por ejemplo, que el Cajero intente anular una venta o ver recetas).
 - Probar validación de entradas e **inyección NoSQL** con cargas manuales (por ejemplo, `{"$ne": null}` en el usuario).
-- Probar el **bloqueo por intentos** solo sobre las cuentas propias: 5 contraseñas incorrectas bloquean la cuenta 15 minutos.
+- Probar el **bloqueo por intentos** solo sobre `ktobarm` o las cuentas que ustedes creen: 5 contraseñas incorrectas bloquean la cuenta 15 minutos.
 - Probar la **app autenticadora**: que un código solo sirva una vez, que el correo no se acepte para operaciones críticas y que los códigos incorrectos cuenten para el bloqueo.
 - Probar la **expiración de sesión** (15 minutos de inactividad, 8 horas como máximo), el cierre de sesión y la re-autenticación.
 - Revisar cabeceras de seguridad, cookies, CORS y la verificación de origen con las herramientas del navegador.
-- Revisar la **bitácora** y los reportes con `aud.auditor`, exportar a CSV y verificar la cadena de hash contra el ancla.
+- Revisar la **bitácora** y los reportes con la cuenta de rol Auditor que creen, exportar a CSV y verificar la cadena de hash contra el ancla.
 - Revisar el código fuente y ejecutar en local las pruebas automáticas (`npm test` en `farmacentro-backend`) o el sistema completo.
 - Revisar la documentación y la evidencia frente a la matriz de controles.
 
@@ -53,7 +55,7 @@ Desde entonces, cada ingreso pide contraseña y código por correo (o huella). L
 - **Denegación de servicio**, pruebas de carga o escáneres automáticos agresivos. La API tiene límites por IP (10 intentos de inicio de sesión cada 15 minutos y 300 peticiones cada 5 minutos) y corre en un plan gratuito. Un escáner automático solo se permite contra una copia local.
 - Atacar la infraestructura de terceros: Netlify, Render, MongoDB Atlas, Brevo o GitHub.
 - Ingeniería social o *phishing* contra el equipo o el ingeniero.
-- Intentar entrar con cuentas que no les fueron asignadas, o bloquearlas a propósito.
+- Usar, bloquear o modificar cuentas que no sean `ktobarm` o las que ustedes creen. Aunque `ktobarm` es Administrador, no cambien el rol, el estado, la contraseña, la huella ni la app autenticadora de `admin`, `osagastumea1`, `henrynan` ni `canchenan`, ni habiliten las cuentas demo.
 - Usar **datos personales reales** o datos reales de tarjetas. Todo es ficticio y el pago es simulado.
 - Controles marcados como **solo documentado** (tienda en línea, modo de contingencia del POS, red/VLAN/firewall, terminales P2PE, EDR y los demás de [limitaciones conocidas](limitaciones-conocidas.md)). Se pueden evaluar como documentación, no como implementación.
 
@@ -61,12 +63,9 @@ Lo que ya aparece en [limitaciones conocidas](limitaciones-conocidas.md) está d
 
 ## 5. Plazo
 
-| | Fecha |
-|---|---|
-| Inicio de la auditoría | _(por definir con el Ing. Sagastume)_ |
-| Entrega del informe de hallazgos | _(por definir con el Ing. Sagastume)_ |
+Las fechas de inicio y de entrega del informe las indica el Ing. Sagastume.
 
-Durante el plazo, el equipo de desarrollo no cambia el sistema desplegado salvo para corregir algo que impida la auditoría. Cualquier cambio queda en el historial de Git y, si toca cuentas, en la bitácora.
+Durante la auditoría, el equipo de desarrollo no cambia el sistema desplegado salvo para corregir algo que impida la auditoría. Cualquier cambio queda en el historial de Git y, si toca cuentas, en la bitácora.
 
 ## 6. Formato de hallazgos
 
