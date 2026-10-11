@@ -30,7 +30,7 @@
 ### C-08. App autenticadora en lugar del correo para operaciones críticas (11/10/2026)
 - CLAUDE.md define el segundo factor como huella (WebAuthn) o, como alternativa, código por correo, y pide repetirlo en las operaciones críticas. El equipo decidió que las operaciones críticas se confirmen con una **app autenticadora (TOTP)** y no con correo, para no enviar tantos correos. El inicio de sesión sigue con correo o huella.
 - La app autenticadora no aparece en CLAUDE.md. Se documenta como decisión del equipo (D-32); el requisito de "pedir de nuevo el segundo factor" se mantiene, solo cambia el método.
-- **Pendiente:** actualizar la redacción de CLAUDE.md y del entregable 2 si el ingeniero lo aprueba.
+- CLAUDE.md se actualizó el 11/10/2026 (sección "Segundo factor"). **Pendiente:** actualizar la redacción del entregable 2.
 
 ### C-07. Repositorio público y credenciales de prueba
 - CLAUDE.md pide las credenciales de prueba en `docs/credenciales-prueba.md`, pero el repositorio 08-FarmaCentro será **público**: cualquiera vería la contraseña de demostración.

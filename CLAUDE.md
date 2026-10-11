@@ -32,10 +32,13 @@
 - Bloqueo de 15 minutos tras 5 intentos fallidos.
 - Sesión en el servidor (`express-session` + `connect-mongo`) con cookie `httpOnly`, `Secure` y `SameSite=Strict`. Regenerar el id de sesión al iniciar sesión y expirar la sesión tras 15 minutos de inactividad.
 - Nunca guardar tokens ni datos de sesión en `localStorage`.
-### Segundo factor
-- Primera opción: huella con WebAuthn (`@simplewebauthn/server` y `@simplewebauthn/browser`) con `userVerification: "required"`. WebAuthn solo funciona en `localhost` o con HTTPS.
-- Alternativa: código de 6 dígitos por correo (Nodemailer). Es de un solo uso, vence en 5 minutos y se invalida al generar uno nuevo. Guardar solo el hash del código, con límite de intentos y notificación al usuario.
-- Pedir de nuevo el segundo factor para: anular ventas, ajustar inventario, despachar controlados y cambiar roles.
+### Segundo factor (decisión D-32)
+- **Inicio de sesión:** código de 6 dígitos por correo (Nodemailer en local, API de Brevo en producción) o huella. El código es de un solo uso, vence en 5 minutos y se invalida al generar uno nuevo. Guardar solo el hash del código, con límite de intentos y notificación al usuario.
+- **Huella:** WebAuthn (`@simplewebauthn/server` y `@simplewebauthn/browser`) con `userVerification: "required"`. WebAuthn solo funciona en `localhost` o con HTTPS.
+- **Operaciones críticas:** app autenticadora TOTP (RFC 6238: SHA-1, 6 dígitos, 30 segundos; Google o Microsoft Authenticator) o huella. **Nunca** el código por correo. El secreto TOTP se guarda cifrado con AES-256-GCM, cada código se acepta una sola vez y los códigos incorrectos cuentan para el bloqueo por intentos.
+- El código por correo solo sirve, además de para iniciar sesión, para configurar el **primer** factor fuerte (app o huella) de una cuenta que no tiene ninguno. Si ya tiene uno, configurar otro pide el existente.
+- Pedir de nuevo el segundo factor (permiso de un solo uso, ligado a la acción y al registro, válido 2 minutos) para: anular ventas, ajustar inventario, despachar controlados, cambiar roles y administrar usuarios.
+- Si un empleado pierde el celular, el Administrador restablece su app autenticadora con segundo factor y motivo; queda en la bitácora.
 ### Autorización (5.15, 5.18)
 - Control por roles aplicado en el backend con middleware. El frontend solo oculta opciones; nunca es la única barrera.
 - Mínimo privilegio en todo.
